@@ -168,6 +168,7 @@ class KioskApp(App):
             self.personality_question_text = "Gata! Vezi recomandarea de mai jos."
             self.personality_options = []
             self.personality_progress = ""
+            self._show_personality_popup(result)
 
     # --- Scientist matcher ---
     def capture_scientist_match(self):
@@ -238,6 +239,44 @@ class KioskApp(App):
             title="Ai câștigat!",
             content=content,
             size_hint=(0.65, 0.45),
+            auto_dismiss=True,
+        )
+        ok_btn.bind(on_press=popup.dismiss)
+        popup.open()
+
+    # --- Popup Personalitate ---
+    def _show_personality_popup(self, result: dict):
+        faculty = result.get("faculty", "Facultate")
+        reason = result.get("reason", "")
+        messages = [
+            "Bravo! ⭐️",
+            "Felicitări! 🎉",
+            "Super alegere! 🚀",
+            "Excelent! 💡",
+            "Wow, bine făcut! 🌟",
+        ]
+        btn_text = random.choice(messages)
+
+        content = BoxLayout(orientation="vertical", padding=16, spacing=12)
+        msg = Label(
+            text=f"{btn_text}\n\nRecomandare: {faculty}\n{reason}",
+            font_size="22sp",
+            bold=True,
+            halign="center",
+            valign="middle",
+            text_size=(420, None),
+        )
+        ok_btn = Button(
+            text=btn_text,
+            size_hint_y=None,
+            height=52,
+        )
+        content.add_widget(msg)
+        content.add_widget(ok_btn)
+        popup = Popup(
+            title="Rezultatul tău",
+            content=content,
+            size_hint=(0.7, 0.5),
             auto_dismiss=True,
         )
         ok_btn.bind(on_press=popup.dismiss)

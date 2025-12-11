@@ -19,6 +19,7 @@ from modules.personality_test import PersonalityTest
 from modules.scientist_matcher import ScientistMatcher
 from modules.rps_camera_game import RPSCameraGame
 from modules.maze_game import MazeGame
+from modules.circuit_game import CircuitGame
 
 
 # --- Screen-uri de bază ---
@@ -53,6 +54,11 @@ class MazeGameScreen(Screen):
     pass
 
 
+class CircuitGameScreen(Screen):
+    """Ecran pentru jocul „Circuitul Magic”."""
+    pass
+
+
 class KioskApp(App):
     # True dacă a fost detectată o persoană în fața camerei
     person_present = BooleanProperty(False)
@@ -73,6 +79,10 @@ class KioskApp(App):
     maze_display_text = StringProperty("")
     maze_status_text = StringProperty("Găsește ieșirea!")
 
+    # Proprietăți pentru Circuit
+    circuit_board_text = StringProperty("")
+    circuit_status_text = StringProperty("Trage componentele în sloturi.")
+
     def build(self):
         self.title = "Universitate - Kiosk"
         kv_path = os.path.join(os.path.dirname(__file__), "kv", "main.kv")
@@ -82,8 +92,10 @@ class KioskApp(App):
         self.scientist_matcher = ScientistMatcher()
         self.rps_game = RPSCameraGame()
         self.maze_game = MazeGame()
+        self.circuit_game = CircuitGame()
         self._reset_personality_test()
         self._reset_maze()
+        self._reset_circuit()
         return Builder.load_file(kv_path)
 
     def on_start(self):
@@ -199,6 +211,26 @@ class KioskApp(App):
             self.maze_status_text = "Perete! Încearcă altă direcție."
         else:
             self.maze_status_text = "Găsește ieșirea!"
+
+    # --- Circuit Magic ---
+    def _reset_circuit(self):
+        self.circuit_game.reset()
+        self.circuit_board_text = self.circuit_game.render()
+        self.circuit_status_text = "Trage componentele în sloturile corecte."
+
+    def place_circuit(self, slot: str, component: str):
+        status = self.circuit_game.place(slot, component)
+        self.circuit_board_text = self.circuit_game.render()
+        if status == "win":
+            self.circuit_status_text = "Corect! LED-ul s-a aprins ✨"
+        elif status == "ok":
+            self.circuit_status_text = "Continuă, mai sunt componente de plasat."
+        elif status == "wrong":
+            self.circuit_status_text = "Componentă greșită pentru slot."
+        elif status == "filled":
+            self.circuit_status_text = "Slot ocupat. Resetează sau alege alt slot."
+        else:
+            self.circuit_status_text = "Încearcă din nou."
 
     def on_stop(self):
         """Oprește detectorul (nefolosit acum) la ieșirea din aplicație."""

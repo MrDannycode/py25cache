@@ -39,7 +39,7 @@ class RPSCameraGame:
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=15
             )
             
             if result.returncode != 0:
@@ -107,13 +107,17 @@ class RPSCameraGame:
             return "foarfecă"
         return "piatră"
 
-    def _warm_capture(self, attempts: int = 3, delay: float = 0.2):
+    def _warm_capture(self, attempts: int = 2, delay: float = 0.5):
         """Face mai multe încercări de captură pentru a se asigura că primește un frame valid."""
         for attempt in range(attempts):
             try:
                 frame = self._capture_frame_rpicam()
                 if frame is not None and frame.size > 0:
                     return frame
+            except subprocess.TimeoutExpired:
+                if attempt == attempts - 1:
+                    raise RuntimeError("Timeout la capturarea imaginii. Verifică dacă camera funcționează.")
+                time.sleep(delay)
             except Exception as e:
                 if attempt == attempts - 1:
                     raise

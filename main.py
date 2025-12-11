@@ -248,12 +248,13 @@ class KioskApp(App):
     def _show_personality_popup(self, result: dict):
         faculty = result.get("faculty", "Facultate")
         reason = result.get("reason", "")
+        # Mesaje fără emoji (pentru fonturi care nu afișează corect)
         messages = [
-            "Bravo! ⭐️",
-            "Felicitări! 🎉",
-            "Super alegere! 🚀",
-            "Excelent! 💡",
-            "Wow, bine făcut! 🌟",
+            "Bravo!",
+            "Felicitări!",
+            "Super alegere!",
+            "Excelent!",
+            "Wow, bine făcut!",
         ]
         btn_text = random.choice(messages)
 

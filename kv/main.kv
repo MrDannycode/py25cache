@@ -138,19 +138,64 @@ ScreenManager:
             text: "Test de personalitate"
             font_size: "36sp"
             size_hint_y: 0.2
+        Label:
+            text: app.personality_progress
+            font_size: "18sp"
+            size_hint_y: 0.1
 
         Label:
-            text: "Aici va fi implementat testul de personalitate.\\n\\nPoți înlocui acest ecran cu UI-ul tău care folosește logica din modules/personality_test.py."
+            id: question_label
+            text: app.personality_question_text
+            font_size: "22sp"
+            halign: "center"
+            valign: "middle"
+            text_size: self.width * 0.9, None
+            size_hint_y: 0.25
+
+        GridLayout:
+            cols: 1
+            spacing: dp(12)
+            size_hint_y: 0.35
+
+            Button:
+                text: app.personality_options[0] if len(app.personality_options) > 0 else " "
+                font_size: "20sp"
+                disabled: len(app.personality_options) < 1
+                on_press: app.select_personality_answer(0)
+            Button:
+                text: app.personality_options[1] if len(app.personality_options) > 1 else " "
+                font_size: "20sp"
+                disabled: len(app.personality_options) < 2
+                on_press: app.select_personality_answer(1)
+            Button:
+                text: app.personality_options[2] if len(app.personality_options) > 2 else " "
+                font_size: "20sp"
+                disabled: len(app.personality_options) < 3
+                on_press: app.select_personality_answer(2)
+            Button:
+                text: app.personality_options[3] if len(app.personality_options) > 3 else " "
+                font_size: "20sp"
+                disabled: len(app.personality_options) < 4
+                on_press: app.select_personality_answer(3)
+
+        Label:
+            text: app.personality_result_text
             font_size: "20sp"
             halign: "center"
             valign: "middle"
             text_size: self.size
-            size_hint_y: 0.6
+            size_hint_y: 0.2
+
+        Button:
+            text: "Repornește testul"
+            font_size: "20sp"
+            size_hint_y: 0.15
+            on_press: app._reset_personality_test()
 
         Button:
             text: "Înapoi"
             font_size: "20sp"
-            size_hint_y: 0.2
+            size_hint_y: 0.15
             on_press: app.go_home()
 
 
@@ -173,7 +218,7 @@ ScreenManager:
             size_hint_y: 0.2
 
         Label:
-            text: "Aici vei folosi camera pentru a face o poză elevului, iar apoi vei afișa oameni de știință aleși aleator care seamănă cu el/ea.\\n\\nUI-ul concret îl poți implementa ulterior în modules/scientist_matcher.py."
+            text: app.scientist_status_text
             font_size: "20sp"
             halign: "center"
             valign: "middle"
@@ -181,9 +226,15 @@ ScreenManager:
             size_hint_y: 0.6
 
         Button:
+            text: "Fă o poză și găsește potrivirea"
+            font_size: "20sp"
+            size_hint_y: 0.15
+            on_press: app.capture_scientist_match()
+
+        Button:
             text: "Înapoi"
             font_size: "20sp"
-            size_hint_y: 0.2
+            size_hint_y: 0.15
             on_press: app.go_home()
 
 
@@ -206,7 +257,7 @@ ScreenManager:
             size_hint_y: 0.2
 
         Label:
-            text: "Aici vei implementa jocul Piatra-Foarfecă-Hârtie folosind camera și recunoașterea gesturilor.\\n\\nLogica poate fi în modules/rps_camera_game.py, iar UI-ul îl poți personaliza după preferințe."
+            text: app.rps_status_text
             font_size: "20sp"
             halign: "center"
             valign: "middle"
@@ -214,8 +265,14 @@ ScreenManager:
             size_hint_y: 0.6
 
         Button:
+            text: "Joacă o rundă"
+            font_size: "20sp"
+            size_hint_y: 0.15
+            on_press: app.play_rps_round()
+
+        Button:
             text: "Înapoi"
             font_size: "20sp"
-            size_hint_y: 0.2
+            size_hint_y: 0.15
             on_press: app.go_home()
 

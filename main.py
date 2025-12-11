@@ -1,4 +1,5 @@
 import os
+import random
 import webbrowser
 
 from kivy.config import Config
@@ -11,8 +12,12 @@ Config.set("graphics", "resizable", "0")
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.clock import Clock
-from kivy.properties import BooleanProperty
+from kivy.properties import BooleanProperty, ListProperty, StringProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
+
+from modules.personality_test import PersonalityTest
+from modules.scientist_matcher import ScientistMatcher
+from modules.rps_camera_game import RPSCameraGame
 
 
 # --- Screen-uri de bază ---
@@ -28,7 +33,7 @@ class InfoScreen(Screen):
 
 
 class PersonalityTestScreen(Screen):
-    """Ecran pentru testul de personalitate (UI-ul detaliat îl vei adăuga ulterior)."""
+    """Ecran pentru testul de personalitate."""
     pass
 
 
@@ -46,9 +51,25 @@ class KioskApp(App):
     # True dacă a fost detectată o persoană în fața camerei
     person_present = BooleanProperty(False)
 
+    # Proprietăți pentru testul de personalitate
+    personality_question_text = StringProperty("")
+    personality_options = ListProperty([])
+    personality_progress = StringProperty("")
+    personality_result_text = StringProperty("")
+
+    # Proprietăți pentru scientist matcher
+    scientist_status_text = StringProperty("Atinge butonul pentru a face o poză și a găsi un om de știință.")
+
+    # Proprietăți pentru RPS
+    rps_status_text = StringProperty("Atinge «Joacă o rundă» și arată un gest către cameră.")
+
     def build(self):
         self.title = "Universitate - Kiosk"
         kv_path = os.path.join(os.path.dirname(__file__), "kv", "main.kv")
+        self.personality_engine = PersonalityTest()
+        self.scientist_matcher = ScientistMatcher()
+        self.rps_game = RPSCameraGame()
+        self._reset_personality_test()
         return Builder.load_file(kv_path)
 
     def on_start(self):
@@ -66,11 +87,9 @@ class KioskApp(App):
                 "         Prezența nu va fi detectată automat."
             )
             self.presence_detector = None
-            # Dacă vrei să testezi fără detector, setează person_present = True
-            # self.person_present = True
+            # Pentru teste fără detector: self.person_present = True
             return
 
-        # Creezi instanța (adaptează parametrii la implementarea ta reală)
         self.presence_detector = PresenceDetector(camera_index=0)
 
         try:
@@ -94,6 +113,7 @@ class KioskApp(App):
         except Exception as exc:
             print(f"[KIOSK] Eroare în is_person_present(): {exc}")
 
+    # --- Info screen ---
     def open_university_website(self):
         """Deschide site-ul universității în browser."""
         # Înlocuiește cu link-ul real al universității tale
@@ -107,6 +127,75 @@ class KioskApp(App):
         """Revine la ecranul principal."""
         if self.root:
             self.root.current = "home"
+
+    # --- Personalitate ---
+    def _reset_personality_test(self):
+        self.personality_engine.reset()
+        question = self.personality_engine.current_question()
+        self._apply_personality_question(question)
+        self.personality_result_text = ""
+
+    def _apply_personality_question(self, question):
+        if not question:
+            self.personality_question_text = "Test finalizat."
+            self.personality_options = []
+            self.personality_progress = ""
+            return
+        self.personality_question_text = question["text"]
+        self.personality_options = question["options"]
+        self.personality_progress = self.personality_engine.progress_label()
+
+    def select_personality_answer(self, option_index: int):
+        if not self.personality_engine.has_next():
+            return
+        try:
+            self.personality_engine.answer(option_index)
+        except Exception as exc:
+            print(f"[KIOSK] Eroare la răspuns: {exc}")
+            return
+
+        if self.personality_engine.has_next():
+            question = self.personality_engine.current_question()
+            self._apply_personality_question(question)
+        else:
+            result = self.personality_engine.result()
+            self.personality_result_text = (
+                f"Recomandare: {result['faculty']}\\n{result['reason']}"
+            )
+            self.personality_question_text = "Gata! Vezi recomandarea de mai jos."
+            self.personality_options = []
+            self.personality_progress = ""
+
+    # --- Scientist matcher ---
+    def capture_scientist_match(self):
+        self.scientist_status_text = "Capturez... te rog stai nemișcat(ă)."
+        try:
+            match = self.scientist_matcher.capture_and_match(camera_index=0)
+        except Exception as exc:
+            self.scientist_status_text = f"Eroare cameră: {exc}"
+            return
+
+        if not match:
+            self.scientist_status_text = "Nu am putut detecta o față. Încearcă din nou."
+            return
+
+        name = match.get("name", "Om de știință misterios")
+        desc = match.get("description", "")
+        self.scientist_status_text = f"Semeni cu {name}!\\n{desc}"
+
+    # --- RPS ---
+    def play_rps_round(self):
+        self.rps_status_text = "Capturez gestul... 3, 2, 1!"
+        try:
+            outcome = self.rps_game.play_round(camera_index=0)
+        except Exception as exc:
+            self.rps_status_text = f"Eroare cameră: {exc}"
+            return
+
+        player = outcome.get("player_move", "necunoscut")
+        ai = outcome.get("ai_move", "necunoscut")
+        result = outcome.get("result", "egal")
+        self.rps_status_text = f"Tu: {player} | AI: {ai} -> {result}"
 
     def on_stop(self):
         """Oprește detectorul de prezență la ieșirea din aplicație."""

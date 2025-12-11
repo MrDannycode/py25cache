@@ -327,14 +327,23 @@ ScreenManager:
             font_size: "16sp"
             size_hint_y: 0.08
 
-        Label:
-            text: app.maze_display_text
-            font_size: "20sp"
-            markup: True
-            halign: "center"
-            valign: "middle"
-            text_size: self.size
+        BoxLayout:
             size_hint_y: 0.45
+            padding: dp(8)
+            canvas.before:
+                Color:
+                    rgba: 0.8, 0.8, 0.9, 1
+                Line:
+                    width: 2
+                    rectangle: (self.x, self.y, self.width, self.height)
+
+            Label:
+                text: app.maze_display_text
+                font_size: "20sp"
+                markup: True
+                halign: "center"
+                valign: "middle"
+                text_size: self.size
 
         GridLayout:
             cols: 3
@@ -343,24 +352,24 @@ ScreenManager:
 
             Widget:
             Button:
-                text: "↑"
+                text: "↑ Sus"
                 font_size: "24sp"
                 on_press: app.move_maze("up")
             Widget:
 
             Button:
-                text: "←"
+                text: "← Stânga"
                 font_size: "24sp"
                 on_press: app.move_maze("left")
             Widget:
             Button:
-                text: "→"
+                text: "→ Dreapta"
                 font_size: "24sp"
                 on_press: app.move_maze("right")
 
             Widget:
             Button:
-                text: "↓"
+                text: "↓ Jos"
                 font_size: "24sp"
                 on_press: app.move_maze("down")
             Widget:

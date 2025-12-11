@@ -1,27 +1,50 @@
+import random
 from typing import List
 
 
 class MazeGame:
     """
-    Joc simplu de labirint pentru touchscreen.
-    # = perete, E = ieșire, P = jucător.
+    Joc simplu de labirint pentru touchscreen, stil „caiet de activități”.
+    # = perete, E = ieșire, P = jucător, . = traseul parcurs.
     """
 
     def __init__(self):
-        self._template = [
-            "#########",
-            "#P     E#",
-            "# ### # #",
-            "#   # # #",
-            "### #   #",
-            "#   ### #",
-            "#       #",
-            "#########",
+        # Trei labirinturi simple, cu căi clare (gen manual pentru copii)
+        self._templates = [
+            [
+                "#########",
+                "#P    #E#",
+                "# ## ### ",
+                "#       #",
+                "##### # #",
+                "#     # #",
+                "#########",
+            ],
+            [
+                "#########",
+                "#P   #  #",
+                "# ### #E#",
+                "#     # #",
+                "### ### #",
+                "#       #",
+                "#########",
+            ],
+            [
+                "#########",
+                "#P     E#",
+                "### ### #",
+                "#     # #",
+                "# ###   #",
+                "#       #",
+                "#########",
+            ],
         ]
+        self.trail_char = "."
         self.reset()
 
     def reset(self):
-        self.grid: List[List[str]] = [list(row) for row in self._template]
+        template = random.choice(self._templates)
+        self.grid: List[List[str]] = [list(row) for row in template]
         self.player_pos = self._find_player()
 
     def _find_player(self):
@@ -56,8 +79,8 @@ class MazeGame:
         if target == "#":
             return "block"
 
-        # move player
-        self.grid[r][c] = " "
+        # move player, lasă o dâră pentru feedback vizual
+        self.grid[r][c] = self.trail_char
         self.grid[nr][nc] = "P"
         self.player_pos = (nr, nc)
 

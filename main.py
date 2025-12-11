@@ -14,6 +14,8 @@ from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.properties import BooleanProperty, ListProperty, StringProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
 
 from modules.personality_test import PersonalityTest
 from modules.scientist_matcher import ScientistMatcher
@@ -207,10 +209,26 @@ class KioskApp(App):
         self.maze_display_text = self.maze_game.render()
         if status == "win":
             self.maze_status_text = "Bravo! Ai găsit ieșirea. Apasă «Repornește»."
+            self._show_maze_win_popup()
         elif status == "block":
             self.maze_status_text = "Perete! Încearcă altă direcție."
         else:
             self.maze_status_text = "Găsește ieșirea!"
+
+    def _show_maze_win_popup(self):
+        content = Label(
+            text="Felicitări! Ai găsit ieșirea din labirint!",
+            halign="center",
+            valign="middle",
+            text_size=(400, None),
+        )
+        popup = Popup(
+            title="Ai câștigat!",
+            content=content,
+            size_hint=(0.6, 0.4),
+            auto_dismiss=True,
+        )
+        popup.open()
 
     # --- Circuit Magic ---
     def _reset_circuit(self):

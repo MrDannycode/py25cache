@@ -474,35 +474,27 @@ class CircuitCanvas(Widget):
         
         has_positive_path = battery_to_switch and switch_to_bulb
         
-        # Verifică dacă există conexiuni greșite
+        # Verifică dacă există conexiuni greșite (doar dacă există conexiuni)
         wrong_connections = False
-        for conn in self.connections:
-            start = conn["start"]
-            end = conn["end"]
-            
-            # Conexiuni greșite: orice altceva decât cele corecte
-            if not (
-                (start == "battery_positive" and end == "switch_in") or
-                (end == "battery_positive" and start == "switch_in") or
-                (start == "switch_out" and end == "bulb_positive") or
-                (end == "switch_out" and start == "bulb_positive") or
-                (start == "battery_negative" and end == "bulb_negative") or
-                (end == "battery_negative" and start == "bulb_negative")
-            ):
-                wrong_connections = True
-                break
-        
-        # Dacă există conexiuni greșite, trigger explozie
-        if wrong_connections or (len(self.connections) > 0 and not (has_positive_path and has_negative_path)):
-            self.explosion_active = True
-            self._create_explosion()
-            self.bulb_lit = False
-            self._redraw()
-            # Notifică aplicația
-            app = App.get_running_app()
-            if hasattr(app, "on_circuit_explosion"):
-                Clock.schedule_once(lambda dt: app.on_circuit_explosion(), 0.1)
-            return
+        if len(self.connections) > 0:
+            for conn in self.connections:
+                start = conn["start"]
+                end = conn["end"]
+                
+                # Conexiuni corecte
+                is_correct = (
+                    (start == "battery_positive" and end == "switch_in") or
+                    (end == "battery_positive" and start == "switch_in") or
+                    (start == "switch_out" and end == "bulb_positive") or
+                    (end == "switch_out" and start == "bulb_positive") or
+                    (start == "battery_negative" and end == "bulb_negative") or
+                    (end == "battery_negative" and start == "bulb_negative")
+                )
+                
+                # Dacă există o conexiune care nu este corectă
+                if not is_correct:
+                    wrong_connections = True
+                    break
         
         # Circuit complet și corect dacă: toate conexiunile sunt corecte și switch e ON
         if has_positive_path and has_negative_path and self.switch_on:
@@ -515,10 +507,22 @@ class CircuitCanvas(Widget):
             if hasattr(app, "on_circuit_complete"):
                 Clock.schedule_once(lambda dt: app.on_circuit_complete(), 2.0)
         else:
-            self.explosion_active = False
-            self.explosion_particles = []
-            self.bulb_lit = False
-            self._redraw()
+            # Dacă există conexiuni greșite ȘI becul nu se aprinde -> explozie
+            if wrong_connections and not self.bulb_lit:
+                self.explosion_active = True
+                self._create_explosion()
+                self.bulb_lit = False
+                self._redraw()
+                # Notifică aplicația
+                app = App.get_running_app()
+                if hasattr(app, "on_circuit_explosion"):
+                    Clock.schedule_once(lambda dt: app.on_circuit_explosion(), 0.1)
+            else:
+                # Nu există conexiuni greșite sau nu există conexiuni deloc
+                self.explosion_active = False
+                self.explosion_particles = []
+                self.bulb_lit = False
+                self._redraw()
     
     def _create_explosion(self):
         """Creează particule pentru efectul de explozie."""

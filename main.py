@@ -375,6 +375,10 @@ class KioskApp(App):
     def on_circuit_complete(self):
         """Callback când circuitul este complet."""
         self.circuit_status_text = "Felicitări! Circuitul funcționează perfect!"
+    
+    def on_circuit_explosion(self):
+        """Callback când circuitul are conexiuni greșite."""
+        self.circuit_status_text = "AI LUAT FOC! Conexiunile sunt greșite!"
         self._show_circuit_win_popup()
 
     def _show_circuit_win_popup(self):

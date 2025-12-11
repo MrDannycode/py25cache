@@ -1,4 +1,5 @@
 import math
+import random
 from typing import List, Tuple, Optional, Dict
 
 from kivy.clock import Clock
@@ -21,6 +22,8 @@ class CircuitCanvas(Widget):
         self._start_terminal = None
         self.bulb_lit = False
         self.switch_on = False
+        self.explosion_active = False
+        self.explosion_particles = []
         self.bind(size=self._setup_components)
         Clock.schedule_once(lambda dt: self._setup_components(), 0.1)
 
@@ -82,12 +85,16 @@ class CircuitCanvas(Widget):
         self.connections = []
         self.bulb_lit = False
         self.switch_on = False
+        self.explosion_active = False
+        self.explosion_particles = []
         self._redraw()
 
     def clear_lines(self):
         """Șterge toate conexiunile."""
         self.connections = []
         self.bulb_lit = False
+        self.explosion_active = False
+        self.explosion_particles = []
         self._redraw()
 
     def toggle_switch(self):
@@ -118,6 +125,10 @@ class CircuitCanvas(Widget):
             self._draw_battery()
             self._draw_switch()
             self._draw_bulb()
+            
+            # Desenează explozia dacă e activă
+            if self.explosion_active:
+                self._draw_explosion()
             
             # Desenează terminalele (zone de touch vizibile)
             self._draw_terminals()
@@ -430,27 +441,73 @@ class CircuitCanvas(Widget):
         return nearest
 
     def _check_circuit(self):
-        """Verifică dacă circuitul este complet."""
-        # Verifică conexiuni
-        has_battery_switch = False
-        has_switch_bulb = False
+        """Verifică dacă circuitul este complet și corect."""
+        # Verifică conexiunile corecte:
+        # 1. battery_positive -> switch_in -> switch_out -> bulb_positive
+        # 2. battery_negative -> bulb_negative
+        
+        has_positive_path = False
+        has_negative_path = False
+        
+        # Verifică calea pozitivă: battery_positive -> switch_in -> switch_out -> bulb_positive
+        battery_to_switch = False
+        switch_to_bulb = False
         
         for conn in self.connections:
             start = conn["start"]
             end = conn["end"]
             
-            # Baterie -> Întrerupător
-            if (("battery" in start and "switch" in end) or
-                ("battery" in end and "switch" in start)):
-                has_battery_switch = True
+            # Plusul bateriei la intrarea întrerupătorului
+            if (start == "battery_positive" and end == "switch_in") or \
+               (end == "battery_positive" and start == "switch_in"):
+                battery_to_switch = True
             
-            # Întrerupător -> Bec
-            if (("switch" in start and "bulb" in end) or
-                ("switch" in end and "bulb" in start)):
-                has_switch_bulb = True
+            # Ieșirea întrerupătorului la plusul becului
+            if (start == "switch_out" and end == "bulb_positive") or \
+               (end == "switch_out" and start == "bulb_positive"):
+                switch_to_bulb = True
+            
+            # Minusul bateriei direct la minusul becului
+            if (start == "battery_negative" and end == "bulb_negative") or \
+               (end == "battery_negative" and start == "bulb_negative"):
+                has_negative_path = True
         
-        # Circuit complet dacă: baterie->switch->bec și switch e ON
-        if has_battery_switch and has_switch_bulb and self.switch_on:
+        has_positive_path = battery_to_switch and switch_to_bulb
+        
+        # Verifică dacă există conexiuni greșite
+        wrong_connections = False
+        for conn in self.connections:
+            start = conn["start"]
+            end = conn["end"]
+            
+            # Conexiuni greșite: orice altceva decât cele corecte
+            if not (
+                (start == "battery_positive" and end == "switch_in") or
+                (end == "battery_positive" and start == "switch_in") or
+                (start == "switch_out" and end == "bulb_positive") or
+                (end == "switch_out" and start == "bulb_positive") or
+                (start == "battery_negative" and end == "bulb_negative") or
+                (end == "battery_negative" and start == "bulb_negative")
+            ):
+                wrong_connections = True
+                break
+        
+        # Dacă există conexiuni greșite, trigger explozie
+        if wrong_connections or (len(self.connections) > 0 and not (has_positive_path and has_negative_path)):
+            self.explosion_active = True
+            self._create_explosion()
+            self.bulb_lit = False
+            self._redraw()
+            # Notifică aplicația
+            app = App.get_running_app()
+            if hasattr(app, "on_circuit_explosion"):
+                Clock.schedule_once(lambda dt: app.on_circuit_explosion(), 0.1)
+            return
+        
+        # Circuit complet și corect dacă: toate conexiunile sunt corecte și switch e ON
+        if has_positive_path and has_negative_path and self.switch_on:
+            self.explosion_active = False
+            self.explosion_particles = []
             self.bulb_lit = True
             self._redraw()
             # Notifică aplicația
@@ -458,5 +515,55 @@ class CircuitCanvas(Widget):
             if hasattr(app, "on_circuit_complete"):
                 Clock.schedule_once(lambda dt: app.on_circuit_complete(), 2.0)
         else:
+            self.explosion_active = False
+            self.explosion_particles = []
             self.bulb_lit = False
             self._redraw()
+    
+    def _create_explosion(self):
+        """Creează particule pentru efectul de explozie."""
+        x, y = self.battery_pos
+        self.explosion_particles = []
+        
+        # Creează particule de explozie (cercuri de foc)
+        for i in range(20):
+            angle = random.uniform(0, 2 * math.pi)
+            distance = random.uniform(0, self.comp_size * 0.8)
+            particle_x = x + distance * math.cos(angle)
+            particle_y = y + distance * math.sin(angle)
+            size = random.uniform(self.comp_size * 0.1, self.comp_size * 0.3)
+            self.explosion_particles.append({
+                "pos": (particle_x, particle_y),
+                "size": size,
+                "color": random.choice([
+                    (1.0, 0.3, 0.0, 1),  # Portocaliu
+                    (1.0, 0.6, 0.0, 1),  # Portocaliu deschis
+                    (1.0, 0.0, 0.0, 1),  # Roșu
+                    (1.0, 0.8, 0.0, 1),  # Galben
+                ])
+            })
+    
+    def _draw_explosion(self):
+        """Desenează efectul de explozie pe baterie."""
+        if not self.explosion_particles:
+            return
+        
+        x, y = self.battery_pos
+        
+        # Desenează fiecare particulă
+        for particle in self.explosion_particles:
+            Color(*particle["color"])
+            Ellipse(
+                pos=(particle["pos"][0] - particle["size"] * 0.5, 
+                     particle["pos"][1] - particle["size"] * 0.5),
+                size=(particle["size"], particle["size"])
+            )
+        
+        # Fum și flăcări mai mari în centru
+        Color(1.0, 0.4, 0.0, 0.8)
+        for i in range(5):
+            Ellipse(
+                pos=(x - self.comp_size * 0.3 + i * self.comp_size * 0.15, 
+                     y - self.comp_size * 0.3 + i * self.comp_size * 0.1),
+                size=(self.comp_size * 0.4, self.comp_size * 0.4)
+            )

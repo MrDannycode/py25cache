@@ -39,12 +39,12 @@ class CircuitCanvas(Widget):
         comp_size = min(w, h) * 0.4
         
         # Poziții fixe, mutate foarte sus pentru display touch de 7 inchi
-        # Bateria rotită la 90 de grade, două întrerupătoare și două becuri
+        # Bateria rotită la 90 de grade, întrerupătoarele și becurile unul peste altul (vertical)
         self.battery_pos = (w * 0.15, h * 0.9)
-        self.switch_pos = (w * 0.4, h * 0.85)  # Primul întrerupător
-        self.switch2_pos = (w * 0.6, h * 0.85)  # Al doilea întrerupător
-        self.bulb_pos = (w * 0.75, h * 0.9)  # Primul bec
-        self.bulb2_pos = (w * 0.9, h * 0.9)  # Al doilea bec
+        self.switch_pos = (w * 0.5, h * 0.9)  # Primul întrerupător sus
+        self.switch2_pos = (w * 0.5, h * 0.75)  # Al doilea întrerupător jos
+        self.bulb_pos = (w * 0.8, h * 0.9)  # Primul bec sus
+        self.bulb2_pos = (w * 0.8, h * 0.75)  # Al doilea bec jos
         self.comp_size = comp_size
         
         # Terminale mari pentru conexiuni (zone de touch mari)

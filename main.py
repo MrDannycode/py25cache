@@ -233,25 +233,25 @@ class KioskApp(App):
         Clock.schedule_once(lambda dt: self._rps_timer.cancel(), 3.5)
     
     def _capture_rps_move(self, dt):
-        """Capturează mutarea după timer."""
+        """Capturează mutarea după timer pentru 2 jucători."""
         try:
-            outcome = self.rps_game.play_round(camera_index=self.camera_index)
+            outcome = self.rps_game.play_round_two_players(camera_index=self.camera_index)
         except Exception as exc:
             self.rps_status_text = f"Eroare cameră: {exc}"
             self.rps_timer_text = ""
             return
 
-        player = outcome.get("player_move", "necunoscut")
-        ai = outcome.get("ai_move", "necunoscut")
+        player1 = outcome.get("player1_move", "necunoscut")
+        player2 = outcome.get("player2_move", "necunoscut")
         result = outcome.get("result", "egal")
         
-        # Mesaje personalizate
-        if result == "player_wins":
-            self.rps_status_text = f"Felicitări, ești mai bun decât un Intel i5!\\n\\nTu: {player} | AI: {ai}"
-        elif result == "ai_wins":
-            self.rps_status_text = f"Haha, până și un Pentium e mai bun ca tine!\\n\\nTu: {player} | AI: {ai}"
+        # Mesaje personalizate pentru 2 jucători
+        if result == "player1_wins":
+            self.rps_status_text = f"Felicitări, ești mai bun decât un Intel i5!\\n\\nJucător 1: {player1} | Jucător 2: {player2}\\nJucătorul 1 câștigă!"
+        elif result == "player2_wins":
+            self.rps_status_text = f"Haha, până și un Pentium e mai bun ca tine!\\n\\nJucător 1: {player1} | Jucător 2: {player2}\\nJucătorul 2 câștigă!"
         else:
-            self.rps_status_text = f"Egal!\\n\\nTu: {player} | AI: {ai}"
+            self.rps_status_text = f"Egal!\\n\\nJucător 1: {player1} | Jucător 2: {player2}"
         
         self.rps_timer_text = ""
 

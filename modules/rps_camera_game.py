@@ -3,34 +3,78 @@ import time
 import subprocess
 import os
 import tempfile
-from typing import Dict
+from typing import Dict, List, Tuple, Optional
+from pathlib import Path
 
 import cv2
 import numpy as np
 
+try:
+    import mediapipe as mp
+    MEDIAPIPE_AVAILABLE = True
+except ImportError:
+    MEDIAPIPE_AVAILABLE = False
+    print("MediaPipe nu este instalat. Folosind metoda alternativă.")
+
 
 class RPSCameraGame:
     """
-    Joc piatră-foarfecă-hârtie folosind recunoașterea semnelor:
+    Joc piatră-foarfecă-hârtie folosind AI pentru recunoașterea semnelor:
     - Piatra = pumn închis
     - Foarfecă = două degete ridicate
     - Hârtie = palmă ridicată
+    
+    Detectează 2 mâini simultan și compară cu pozele salvate.
     """
 
     MOVES = ["piatră", "foarfecă", "hârtie"]
+    
+    def __init__(self):
+        self.reference_images_dir = Path("assets/rps_references")
+        self.reference_images_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Inițializează MediaPipe dacă e disponibil
+        if MEDIAPIPE_AVAILABLE:
+            self.mp_hands = mp.solutions.hands
+            self.hands = self.mp_hands.Hands(
+                static_image_mode=False,
+                max_num_hands=2,
+                min_detection_confidence=0.7,
+                min_tracking_confidence=0.5
+            )
+            self.mp_drawing = mp.solutions.drawing_utils
+        else:
+            self.hands = None
+        
+        # Încarcă pozele de referință dacă există
+        self._load_reference_images()
+
+    def _load_reference_images(self):
+        """Încarcă pozele de referință pentru fiecare semn."""
+        self.reference_images = {
+            "piatră": [],
+            "foarfecă": [],
+            "hârtie": []
+        }
+        
+        for move in self.MOVES:
+            ref_dir = self.reference_images_dir / move
+            if ref_dir.exists():
+                for img_path in ref_dir.glob("*.jpg"):
+                    img = cv2.imread(str(img_path))
+                    if img is not None:
+                        self.reference_images[move].append(img)
 
     def _capture_frame_rpicam(self) -> np.ndarray:
         """
         Capturează un frame folosind rpicam-hello --timeout 0.
         Returnează imaginea ca numpy array (BGR pentru OpenCV).
         """
-        # Creează un fișier temporar pentru imagine
         temp_file = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
         temp_path = temp_file.name
         temp_file.close()
         
         try:
-            # Rulează rpicam-hello pentru a captura o imagine
             cmd = [
                 "rpicam-hello",
                 "--timeout", "0",
@@ -47,7 +91,6 @@ class RPSCameraGame:
             if result.returncode != 0:
                 raise RuntimeError(f"rpicam-hello a eșuat: {result.stderr}")
             
-            # Citește imaginea capturată
             frame = cv2.imread(temp_path)
             if frame is None:
                 raise RuntimeError("Nu am putut citi imaginea capturată.")
@@ -55,61 +98,167 @@ class RPSCameraGame:
             return frame
             
         finally:
-            # Șterge fișierul temporar
             if os.path.exists(temp_path):
                 try:
                     os.unlink(temp_path)
                 except:
                     pass
 
-    def _detect_skin(self, frame):
-        """Detectează pielea din imagine folosind HSV."""
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    def _extract_hand_roi(self, frame: np.ndarray, landmarks, h: int, w: int) -> Optional[np.ndarray]:
+        """Extrage regiunea de interes (ROI) pentru o mână."""
+        if not landmarks:
+            return None
         
-        # Range pentru culoarea pielii în HSV
-        lower_skin = np.array([0, 20, 70], dtype=np.uint8)
-        upper_skin = np.array([20, 255, 255], dtype=np.uint8)
+        # Calculează bounding box pentru mână
+        x_coords = [lm.x * w for lm in landmarks.landmark]
+        y_coords = [lm.y * h for lm in landmarks.landmark]
         
-        mask = cv2.inRange(hsv, lower_skin, upper_skin)
+        x_min, x_max = int(min(x_coords)), int(max(x_coords))
+        y_min, y_max = int(min(y_coords)), int(max(y_coords))
         
-        # Morfologie pentru a elimina zgomotul
-        kernel = np.ones((5, 5), np.uint8)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        # Adaugă padding
+        padding = 30
+        x_min = max(0, x_min - padding)
+        y_min = max(0, y_min - padding)
+        x_max = min(w, x_max + padding)
+        y_max = min(h, y_max + padding)
         
-        return mask
+        roi = frame[y_min:y_max, x_min:x_max]
+        if roi.size == 0:
+            return None
+        
+        # Redimensionează pentru comparare
+        roi = cv2.resize(roi, (224, 224))
+        return roi
+
+    def _compare_with_references(self, hand_roi: np.ndarray, move: str) -> float:
+        """Compară ROI-ul mâinii cu pozele de referință pentru un semn."""
+        if not self.reference_images[move]:
+            return 0.0
+        
+        best_match = 0.0
+        
+        for ref_img in self.reference_images[move]:
+            # Redimensionează imaginea de referință
+            ref_resized = cv2.resize(ref_img, (224, 224))
+            
+            # Compară folosind histogramă de culori
+            hand_hist = cv2.calcHist([hand_roi], [0, 1, 2], None, [50, 50, 50], [0, 256, 0, 256, 0, 256])
+            ref_hist = cv2.calcHist([ref_resized], [0, 1, 2], None, [50, 50, 50], [0, 256, 0, 256, 0, 256])
+            
+            # Corelație între histograme
+            correlation = cv2.compareHist(hand_hist, ref_hist, cv2.HISTCMP_CORREL)
+            best_match = max(best_match, correlation)
+        
+        return best_match
+
+    def _detect_gesture_mediapipe(self, frame: np.ndarray) -> List[Tuple[str, float]]:
+        """Detectează gesturile folosind MediaPipe și compară cu referințele."""
+        if not MEDIAPIPE_AVAILABLE or not self.hands:
+            return []
+        
+        h, w, _ = frame.shape
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = self.hands.process(rgb_frame)
+        
+        detected_gestures = []
+        
+        if results.multi_hand_landmarks:
+            for hand_landmarks in results.multi_hand_landmarks:
+                # Extrage ROI pentru mână
+                hand_roi = self._extract_hand_roi(frame, hand_landmarks, h, w)
+                if hand_roi is None:
+                    continue
+                
+                # Numără degetele ridicate
+                finger_count = self._count_fingers_from_landmarks(hand_landmarks, h, w)
+                
+                # Compară cu pozele de referință
+                best_move = None
+                best_score = 0.0
+                
+                for move in self.MOVES:
+                    score = self._compare_with_references(hand_roi, move)
+                    if score > best_score:
+                        best_score = score
+                        best_move = move
+                
+                # Verifică și cu numărul de degete
+                if finger_count == 0 or finger_count == 1:
+                    if best_move != "piatră" or best_score < 0.3:
+                        best_move = "piatră"
+                        best_score = 0.5
+                elif finger_count == 2:
+                    if best_move != "foarfecă" or best_score < 0.3:
+                        best_move = "foarfecă"
+                        best_score = 0.5
+                elif finger_count >= 4:
+                    if best_move != "hârtie" or best_score < 0.3:
+                        best_move = "hârtie"
+                        best_score = 0.5
+                
+                if best_move and best_score > 0.2:
+                    detected_gestures.append((best_move, best_score))
+        
+        return detected_gestures
+
+    def _count_fingers_from_landmarks(self, landmarks, h: int, w: int) -> int:
+        """Numără degetele ridicate folosind landmark-urile MediaPipe."""
+        # Puncte cheie pentru degete
+        finger_tips = [4, 8, 12, 16, 20]  # Deget mare, arătător, mijlociu, inelar, mic
+        finger_pips = [3, 6, 10, 14, 18]  # Articulații pentru degete
+        
+        fingers_up = 0
+        
+        # Deget mare (verificare specială - stânga/dreapta)
+        if landmarks.landmark[4].x > landmarks.landmark[3].x:
+            fingers_up += 1
+        
+        # Celelalte 4 degete (verificare sus/jos)
+        for i in range(1, 5):
+            if landmarks.landmark[finger_tips[i]].y < landmarks.landmark[finger_pips[i]].y:
+                fingers_up += 1
+        
+        return fingers_up
+
+    def _detect_gesture_fallback(self, frame: np.ndarray) -> List[Tuple[str, float]]:
+        """Metodă alternativă de detectare când MediaPipe nu e disponibil."""
+        # Folosește metoda veche de numărare degete
+        finger_count = self._count_fingers_advanced(frame)
+        
+        if finger_count == 0 or finger_count == 1:
+            return [("piatră", 0.6)]
+        elif finger_count == 2:
+            return [("foarfecă", 0.6)]
+        elif finger_count >= 4:
+            return [("hârtie", 0.6)]
+        else:
+            return [("piatră", 0.4)]  # Default
 
     def _count_fingers_advanced(self, frame) -> int:
-        """
-        Numără degetele folosind o metodă îmbunătățită.
-        Returnează numărul de degete detectate.
-        """
-        # Focus pe centrul imaginii
+        """Numără degetele folosind metoda veche (fallback)."""
         h, w, _ = frame.shape
         cx, cy = w // 2, h // 2
-        size = min(h, w) // 3  # ROI mai mare pentru a captura întreaga mână
+        size = min(h, w) // 3
         roi = frame[max(0, cy - size):min(h, cy + size), 
                     max(0, cx - size):min(w, cx + size)]
         
         if roi.size == 0:
             return 0
 
-        # Detectează pielea
-        skin_mask = self._detect_skin(roi)
-        
-        # Găsește contururi
-        contours, _ = cv2.findContours(skin_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(gray, (5, 5), 0)
+        _, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        thresh = cv2.bitwise_not(thresh)
+
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if not contours:
             return 0
 
-        # Găsește cel mai mare contur (probabil mâna)
         max_contour = max(contours, key=cv2.contourArea)
-        area = cv2.contourArea(max_contour)
-        
-        if area < 3000:  # Arie minimă pentru mână
+        if cv2.contourArea(max_contour) < 3000:
             return 0
 
-        # Calculează hull și defects
         hull = cv2.convexHull(max_contour, returnPoints=False)
         if hull is None or len(hull) < 3:
             return 0
@@ -118,7 +267,6 @@ class RPSCameraGame:
         if defects is None:
             return 0
 
-        # Numără degetele folosind defects
         finger_count = 0
         for i in range(defects.shape[0]):
             s, e, f, d = defects[i, 0]
@@ -126,92 +274,19 @@ class RPSCameraGame:
             end = tuple(max_contour[e][0])
             far = tuple(max_contour[f][0])
             
-            # Calculează distanțele
             a = np.sqrt((end[0] - start[0])**2 + (end[1] - start[1])**2)
             b = np.sqrt((far[0] - start[0])**2 + (far[1] - start[1])**2)
             c = np.sqrt((end[0] - far[0])**2 + (end[1] - far[1])**2)
             
-            # Calculează unghiul
             angle = np.arccos((b**2 + c**2 - a**2) / (2 * b * c + 1e-6))
             
-            # Un defect valid este unul cu unghi < 90 grade și distanță suficientă
-            if angle <= np.pi / 2 and d > 15000:  # Threshold mai mare pentru mai multă precizie
+            if angle <= np.pi / 2 and d > 15000:
                 finger_count += 1
 
-        # Numărul de degete = finger_count (fără +1, deoarece numărăm corect)
         return finger_count
 
-    def _detect_move(self, frame) -> str:
-        """
-        Detectează mutarea jucătorului folosind mai multe metode:
-        - Piatra = pumn închis (0-1 degete, arie mică, aspect ratio compact)
-        - Foarfecă = două degete ridicate (2 degete, aspect ratio vertical)
-        - Hârtie = palmă ridicată (4-5 degete, arie mare)
-        """
-        # Focus pe centrul imaginii
-        h, w, _ = frame.shape
-        cx, cy = w // 2, h // 2
-        size = min(h, w) // 3
-        roi = frame[max(0, cy - size):min(h, cy + size), 
-                    max(0, cx - size):min(w, cx + size)]
-        
-        if roi.size == 0:
-            return random.choice(self.MOVES)
-
-        # Detectează pielea
-        skin_mask = self._detect_skin(roi)
-        
-        # Găsește contururi
-        contours, _ = cv2.findContours(skin_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        if not contours:
-            return random.choice(self.MOVES)
-
-        max_contour = max(contours, key=cv2.contourArea)
-        area = cv2.contourArea(max_contour)
-        
-        if area < 3000:
-            return random.choice(self.MOVES)
-
-        # Calculează aspect ratio
-        x, y, w_rect, h_rect = cv2.boundingRect(max_contour)
-        aspect_ratio = float(w_rect) / h_rect if h_rect > 0 else 0
-
-        # Numără degetele
-        finger_count = self._count_fingers_advanced(frame)
-        
-        # Logica de decizie îmbunătățită
-        if finger_count == 0 or finger_count == 1:
-            # Pumn închis: 0-1 degete sau arie mică cu aspect ratio compact
-            if area < 15000 or (aspect_ratio > 0.7 and aspect_ratio < 1.3):
-                return "piatră"
-        
-        if finger_count == 2:
-            # Două degete: exact 2 degete sau aspect ratio vertical
-            if aspect_ratio < 0.8 or finger_count == 2:
-                return "foarfecă"
-        
-        if finger_count >= 4:
-            # Palmă: 4-5 degete sau arie mare
-            return "hârtie"
-        
-        # Cazuri intermediare - folosim heuristica
-        if finger_count == 3:
-            # 3 degete - probabil foarfecă sau palmă parțială
-            if aspect_ratio < 0.9:
-                return "foarfecă"
-            else:
-                return "hârtie"
-        
-        # Fallback bazat pe arie și aspect ratio
-        if area > 20000:
-            return "hârtie"  # Arie mare = palmă
-        elif aspect_ratio < 0.7:
-            return "foarfecă"  # Aspect ratio vertical = degete
-        else:
-            return "piatră"  # Default = pumn
-
     def _warm_capture(self, attempts: int = 2, delay: float = 0.5):
-        """Face mai multe încercări de captură pentru a se asigura că primește un frame valid."""
+        """Face mai multe încercări de captură."""
         for attempt in range(attempts):
             try:
                 frame = self._capture_frame_rpicam()
@@ -219,7 +294,7 @@ class RPSCameraGame:
                     return frame
             except subprocess.TimeoutExpired:
                 if attempt == attempts - 1:
-                    raise RuntimeError("Timeout la capturarea imaginii. Verifică dacă camera funcționează.")
+                    raise RuntimeError("Timeout la capturarea imaginii.")
                 time.sleep(delay)
             except Exception as e:
                 if attempt == attempts - 1:
@@ -227,51 +302,73 @@ class RPSCameraGame:
                 time.sleep(delay)
         return None
 
-    def play_round(self, camera_index: int = 0) -> Dict:
+    def play_round_two_players(self, camera_index: int = 0) -> Dict:
         """
-        Joacă o rundă. Sistemul alege aleator, jucătorul alege prin recunoașterea semnului.
-        Timer-ul este gestionat în UI, nu aici.
+        Joacă o rundă între 2 jucători.
+        Detectează 2 mâini simultan și compară semnele.
         """
         try:
-            # Capturează frame folosind rpicam-hello
+            # Capturează frame
             frame = self._warm_capture()
             if frame is None:
                 raise RuntimeError("Nu am putut citi un frame de la cameră.")
 
-            # Sistemul alege aleator
-            ai_move = random.choice(self.MOVES)
-            
-            # Jucătorul alege prin recunoașterea semnului
-            player_move = self._detect_move(frame)
-            
+            # Detectează gesturile
+            if MEDIAPIPE_AVAILABLE and self.hands:
+                gestures = self._detect_gesture_mediapipe(frame)
+            else:
+                gestures = self._detect_gesture_fallback(frame)
+
+            # Trebuie să detectăm exact 2 mâini
+            if len(gestures) < 2:
+                # Dacă detectăm doar o mână, o folosim pentru ambele (test)
+                if len(gestures) == 1:
+                    player1_move = gestures[0][0]
+                    player2_move = random.choice(self.MOVES)  # Fallback
+                else:
+                    player1_move = random.choice(self.MOVES)
+                    player2_move = random.choice(self.MOVES)
+            else:
+                # Avem 2 mâini detectate
+                player1_move = gestures[0][0]
+                player2_move = gestures[1][0]
+
             # Determină câștigătorul
-            result = self._winner(player_move, ai_move)
+            result = self._winner(player1_move, player2_move)
             
             return {
-                "player_move": player_move,
-                "ai_move": ai_move,
+                "player1_move": player1_move,
+                "player2_move": player2_move,
                 "result": result
             }
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Eroare la rularea rpicam-hello: {e}")
-        except FileNotFoundError:
-            raise RuntimeError("rpicam-hello nu este instalat sau nu este în PATH.")
         except Exception as e:
             raise RuntimeError(f"Eroare cameră: {e}")
 
-    def _winner(self, player: str, ai: str) -> str:
-        """Determină câștigătorul și returnează mesajul corespunzător."""
-        if player == ai:
+    def _winner(self, player1: str, player2: str) -> str:
+        """Determină câștigătorul între 2 jucători."""
+        if player1 == player2:
             return "Egal"
         if (
-            (player == "piatră" and ai == "foarfecă")
-            or (player == "foarfecă" and ai == "hârtie")
-            or (player == "hârtie" and ai == "piatră")
+            (player1 == "piatră" and player2 == "foarfecă")
+            or (player1 == "foarfecă" and player2 == "hârtie")
+            or (player1 == "hârtie" and player2 == "piatră")
         ):
-            return "player_wins"  # Jucătorul câștigă
-        return "ai_wins"  # AI câștigă
+            return "player1_wins"  # Jucătorul 1 câștigă
+        return "player2_wins"  # Jucătorul 2 câștigă
+
+    # Metodă pentru compatibilitate cu codul vechi
+    def play_round(self, camera_index: int = 0) -> Dict:
+        """Metodă de compatibilitate - joacă între jucător și AI."""
+        result = self.play_round_two_players(camera_index)
+        # Convertim pentru compatibilitate
+        ai_move = random.choice(self.MOVES)
+        return {
+            "player_move": result["player1_move"],
+            "ai_move": ai_move,
+            "result": self._winner(result["player1_move"], ai_move)
+        }
 
 
 if __name__ == "__main__":
     game = RPSCameraGame()
-    print(game.play_round(camera_index=0))
+    print(game.play_round_two_players(camera_index=0))

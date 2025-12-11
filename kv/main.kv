@@ -512,7 +512,7 @@ ScreenManager:
     BoxLayout:
         orientation: "vertical"
         padding: dp(24)
-        spacing: dp(24)
+        spacing: dp(20)
 
         canvas.before:
             Color:
@@ -524,11 +524,12 @@ ScreenManager:
         Label:
             text: "Circuitul Magic"
             font_size: "36sp"
-            size_hint_y: 0.15
+            bold: True
+            size_hint_y: 0.12
 
         Label:
-            text: "Trage cu degetul fire între blocuri colorate: BAT (baterie), BEC (bec), TR (tranzistor), DIO (diodă).\nFă un traseu de la baterie la bec."
-            font_size: "18sp"
+            text: "Conectează firele trăgând cu degetul:\n1. De la baterie la întrerupător\n2. De la întrerupător la bec\n3. Apasă pe întrerupător pentru a-l porni"
+            font_size: "16sp"
             halign: "center"
             valign: "middle"
             text_size: self.width * 0.95, None
@@ -536,16 +537,24 @@ ScreenManager:
 
         CircuitCanvas:
             id: circuit_canvas
-            size_hint_y: 0.55
+            size_hint_y: 0.5
 
         Label:
             text: app.circuit_status_text
             font_size: "18sp"
+            halign: "center"
+            valign: "middle"
+            text_size: self.width * 0.9, None
             size_hint_y: 0.1
 
         BoxLayout:
-            size_hint_y: 0.2
+            size_hint_y: 0.15
             spacing: dp(16)
+
+            Button:
+                text: "Pornește/Oprește\nÎntrerupătorul"
+                font_size: "18sp"
+                on_press: app.circuit_toggle_switch()
 
             Button:
                 text: "Resetează"

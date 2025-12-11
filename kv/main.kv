@@ -4,6 +4,35 @@
 #:import CircuitCanvas modules.circuit_canvas.CircuitCanvas
 #:import MazeView modules.maze_view.MazeView
 
+<Button>:
+    background_normal: ''
+    background_down: ''
+    background_color: 0.94, 0.96, 1, 1
+    color: 0.08, 0.12, 0.22, 1
+    padding: dp(14), dp(10)
+    canvas.before:
+        # subtle drop shadow for 3D effect
+        Color:
+            rgba: 0, 0, 0, 0.25
+        RoundedRectangle:
+            pos: self.x, self.y - dp(3)
+            size: self.width, self.height + dp(3)
+            radius: [dp(14), dp(14), dp(14), dp(14)]
+        # main face
+        Color:
+            rgba: self.background_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(14), dp(14), dp(14), dp(14)]
+    canvas.after:
+        # neon outline
+        Color:
+            rgba: 0.05, 0.78, 1, 1
+        Line:
+            width: dp(2)
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(14), dp(14), dp(14), dp(14))
+
 ScreenManager:
     id: screen_manager
     transition: FadeTransition(duration=0.3)
@@ -120,6 +149,7 @@ ScreenManager:
                 halign: "center"
                 valign: "middle"
                 font_size: "20sp"
+                background_color: 0.95, 0.95, 1, 1
                 on_press: root.manager.current = "circuit"
                 disabled: not app.person_present
 

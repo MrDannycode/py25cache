@@ -216,18 +216,29 @@ class KioskApp(App):
             self.maze_status_text = "Găsește ieșirea!"
 
     def _show_maze_win_popup(self):
-        content = Label(
+        content = BoxLayout(orientation="vertical", padding=16, spacing=12)
+        message = Label(
             text="Felicitări! Ai găsit ieșirea din labirint!",
+            font_size="24sp",
+            bold=True,
             halign="center",
             valign="middle",
             text_size=(400, None),
         )
+        ok_btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=48,
+        )
+        content.add_widget(message)
+        content.add_widget(ok_btn)
         popup = Popup(
             title="Ai câștigat!",
             content=content,
-            size_hint=(0.6, 0.4),
+            size_hint=(0.65, 0.45),
             auto_dismiss=True,
         )
+        ok_btn.bind(on_press=popup.dismiss)
         popup.open()
 
     # --- Circuit Magic ---

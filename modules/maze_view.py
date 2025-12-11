@@ -1,3 +1,4 @@
+import math
 from typing import List, Tuple
 
 from kivy.graphics import Color, Ellipse, Line, Rectangle
@@ -7,10 +8,7 @@ from kivy.uix.widget import Widget
 
 class MazeView(Widget):
     """
-    A simple canvas-based renderer for the maze.
-
-    Draws walls, floor, player, and exit with subtle shading and supports swipe
-    gestures to move the player.
+    Renderer 3D avansat pentru labirint cu efecte de iluminare, umbre și texturi.
     """
 
     __events__ = ("on_swipe",)
@@ -18,11 +16,17 @@ class MazeView(Widget):
     # 2D list of characters from MazeGame (rows of strings split into chars)
     grid: List[List[str]] = ListProperty([])
 
-    wall_color = ListProperty([0.06, 0.12, 0.16, 1])
-    floor_color = ListProperty([0.12, 0.20, 0.22, 1])
-    path_color = ListProperty([0.18, 0.30, 0.34, 1])
-    exit_color = ListProperty([0.97, 0.72, 0.23, 1])
-    player_color = ListProperty([0.25, 0.82, 0.48, 1])
+    # Culori îmbunătățite cu contrast mai bun
+    wall_color = ListProperty([0.15, 0.18, 0.22, 1])
+    wall_highlight = ListProperty([0.25, 0.28, 0.32, 1])
+    wall_shadow = ListProperty([0.05, 0.08, 0.12, 1])
+    floor_color = ListProperty([0.88, 0.85, 0.78, 1])
+    floor_shadow = ListProperty([0.75, 0.72, 0.65, 1])
+    path_color = ListProperty([0.65, 0.75, 0.70, 1])
+    exit_color = ListProperty([1.0, 0.85, 0.15, 1])
+    exit_glow = ListProperty([1.0, 0.95, 0.35, 0.8])
+    player_color = ListProperty([0.15, 0.65, 0.95, 1])
+    player_glow = ListProperty([0.35, 0.85, 1.0, 0.6])
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -34,8 +38,9 @@ class MazeView(Widget):
         self.canvas.before.clear()
         self.canvas.after.clear()
 
+        # Fundal întunecat
         with self.canvas.before:
-            Color(0.05, 0.10, 0.12, 1)
+            Color(0.08, 0.10, 0.12, 1)
             Rectangle(pos=self.pos, size=self.size)
 
         if not self.grid or not self.width or not self.height:
@@ -48,6 +53,7 @@ class MazeView(Widget):
 
         cw = self.width / cols
         ch = self.height / rows
+
         with self.canvas:
             for r, row in enumerate(self.grid):
                 for c, cell in enumerate(row):
@@ -55,31 +61,165 @@ class MazeView(Widget):
                     y = self.top - (r + 1) * ch
 
                     if cell == "#":
+                        # Perete 3D cu iluminare și umbră
+                        # Umbră (stânga și jos)
+                        Color(*self.wall_shadow)
+                        Rectangle(pos=(x, y), size=(cw * 0.15, ch))
+                        Rectangle(pos=(x, y), size=(cw, ch * 0.15))
+
+                        # Perete principal
                         Color(*self.wall_color)
                         Rectangle(pos=(x, y), size=(cw, ch))
-                        Color(1, 1, 1, 0.03)
-                        Line(rectangle=(x, y, cw, ch), width=1)
+
+                        # Highlight (dreapta și sus) pentru efect 3D
+                        Color(*self.wall_highlight)
+                        Rectangle(
+                            pos=(x + cw * 0.85, y),
+                            size=(cw * 0.15, ch)
+                        )
+                        Rectangle(
+                            pos=(x, y + ch * 0.85),
+                            size=(cw, ch * 0.15)
+                        )
+
+                        # Contur subtil
+                        Color(0, 0, 0, 0.3)
+                        Line(
+                            rectangle=(x, y, cw, ch),
+                            width=1.5
+                        )
                         continue
 
-                    # Base floor / path
+                    # Podea / traseu
                     if cell == ".":
+                        # Traseu parcurs (mai deschis)
                         Color(*self.path_color)
                     else:
+                        # Podea normală
+                        # Umbră subtilă pentru adâncime
+                        Color(*self.floor_shadow)
+                        Rectangle(
+                            pos=(x + cw * 0.05, y + ch * 0.05),
+                            size=(cw * 0.95, ch * 0.95)
+                        )
                         Color(*self.floor_color)
-                    Rectangle(pos=(x, y), size=(cw, ch))
+                        Rectangle(pos=(x, y), size=(cw, ch))
 
+                    # Pattern de textură pentru podea (pătrate mici)
+                    Color(1, 1, 1, 0.08)
+                    for i in range(0, int(cw), max(1, int(cw // 4))):
+                        for j in range(0, int(ch), max(1, int(ch // 4))):
+                            if (i + j) % 2 == 0:
+                                Rectangle(
+                                    pos=(x + i, y + j),
+                                    size=(cw // 4, ch // 4)
+                                )
+
+                    # Ieșire cu glow animat
                     if cell == "E":
-                        # Exit tile glow
+                        # Glow exterior
+                        Color(*self.exit_glow)
+                        for i in range(3):
+                            alpha = 0.3 - (i * 0.1)
+                            Color(
+                                self.exit_glow[0],
+                                self.exit_glow[1],
+                                self.exit_glow[2],
+                                alpha
+                            )
+                            Ellipse(
+                                pos=(
+                                    x + cw * (0.1 - i * 0.05),
+                                    y + ch * (0.1 - i * 0.05)
+                                ),
+                                size=(
+                                    cw * (0.8 + i * 0.1),
+                                    ch * (0.8 + i * 0.1)
+                                )
+                            )
+
+                        # Ieșire principală
                         Color(*self.exit_color)
-                        Rectangle(pos=(x + cw * 0.12, y + ch * 0.12), size=(cw * 0.76, ch * 0.76))
-                        Color(1, 1, 1, 0.18)
-                        Line(ellipse=(x + cw * 0.08, y + ch * 0.08, cw * 0.84, ch * 0.84), width=2)
+                        Ellipse(
+                            pos=(x + cw * 0.15, y + ch * 0.15),
+                            size=(cw * 0.7, ch * 0.7)
+                        )
+
+                        # Highlight pe ieșire
+                        Color(1, 1, 1, 0.4)
+                        Ellipse(
+                            pos=(x + cw * 0.25, y + ch * 0.5),
+                            size=(cw * 0.5, ch * 0.3)
+                        )
+
+                        # Simbol stea (simplificat)
+                        Color(1, 1, 1, 0.9)
+                        center_x = x + cw * 0.5
+                        center_y = y + ch * 0.5
+                        star_size = min(cw, ch) * 0.2
+                        # Desenează o stea simplă cu linii
+                        points = []
+                        for i in range(5):
+                            angle = (i * 2 * math.pi / 5) - math.pi / 2
+                            px = center_x + star_size * 0.8 * math.cos(angle)
+                            py = center_y + star_size * 0.8 * math.sin(angle)
+                            points.extend([px, py])
+                        if len(points) >= 4:
+                            Line(points=points, width=2, close=True)
+
+                    # Jucător cu glow și umbră
                     elif cell == "P":
-                        # Player marker with halo
+                        # Umbră sub jucător
+                        Color(0, 0, 0, 0.3)
+                        Ellipse(
+                            pos=(x + cw * 0.25, y + ch * 0.1),
+                            size=(cw * 0.5, ch * 0.2)
+                        )
+
+                        # Glow exterior
+                        Color(*self.player_glow)
+                        for i in range(2):
+                            alpha = 0.4 - (i * 0.2)
+                            Color(
+                                self.player_glow[0],
+                                self.player_glow[1],
+                                self.player_glow[2],
+                                alpha
+                            )
+                            Ellipse(
+                                pos=(
+                                    x + cw * (0.2 - i * 0.05),
+                                    y + ch * (0.15 - i * 0.05)
+                                ),
+                                size=(
+                                    cw * (0.6 + i * 0.1),
+                                    ch * (0.7 + i * 0.1)
+                                )
+                            )
+
+                        # Jucător principal
                         Color(*self.player_color)
-                        Ellipse(pos=(x + cw * 0.25, y + ch * 0.18), size=(cw * 0.5, ch * 0.64))
-                        Color(1, 1, 1, 0.18)
-                        Line(ellipse=(x + cw * 0.2, y + ch * 0.12, cw * 0.6, ch * 0.76), width=2)
+                        Ellipse(
+                            pos=(x + cw * 0.25, y + ch * 0.2),
+                            size=(cw * 0.5, ch * 0.6)
+                        )
+
+                        # Highlight pe jucător
+                        Color(1, 1, 1, 0.5)
+                        Ellipse(
+                            pos=(x + cw * 0.3, y + ch * 0.5),
+                            size=(cw * 0.4, ch * 0.3)
+                        )
+
+                        # Contur
+                        Color(1, 1, 1, 0.8)
+                        Line(
+                            ellipse=(
+                                x + cw * 0.25, y + ch * 0.2,
+                                cw * 0.5, ch * 0.6
+                            ),
+                            width=2
+                        )
 
     # --- Gestures ---
     def on_touch_down(self, touch):
@@ -116,4 +256,3 @@ class MazeView(Widget):
     def on_swipe(self, direction: str):
         """Custom event dispatched when a swipe is detected."""
         pass
-

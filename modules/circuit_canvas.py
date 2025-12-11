@@ -21,7 +21,9 @@ class CircuitCanvas(Widget):
         self._touch_start = None
         self._start_terminal = None
         self.bulb_lit = False
+        self.bulb2_lit = False
         self.switch_on = False
+        self.switch2_on = False
         self.explosion_active = False
         self.explosion_particles = []
         self.bind(size=self._setup_components)
@@ -37,10 +39,12 @@ class CircuitCanvas(Widget):
         comp_size = min(w, h) * 0.4
         
         # Poziții fixe, mutate foarte sus pentru display touch de 7 inchi
-        # Bateria rotită la 90 de grade, întrerupătorul puțin mai jos
+        # Bateria rotită la 90 de grade, două întrerupătoare și două becuri
         self.battery_pos = (w * 0.15, h * 0.9)
-        self.switch_pos = (w * 0.5, h * 0.85)  # Mutat mai jos pentru a evita suprapunerea
-        self.bulb_pos = (w * 0.85, h * 0.9)
+        self.switch_pos = (w * 0.4, h * 0.85)  # Primul întrerupător
+        self.switch2_pos = (w * 0.6, h * 0.85)  # Al doilea întrerupător
+        self.bulb_pos = (w * 0.75, h * 0.9)  # Primul bec
+        self.bulb2_pos = (w * 0.9, h * 0.9)  # Al doilea bec
         self.comp_size = comp_size
         
         # Terminale mari pentru conexiuni (zone de touch mari)
@@ -63,12 +67,28 @@ class CircuitCanvas(Widget):
                 "pos": (self.switch_pos[0] + comp_size * 0.4, self.switch_pos[1]),
                 "size": terminal_size
             },
+            "switch2_in": {
+                "pos": (self.switch2_pos[0] - comp_size * 0.4, self.switch2_pos[1]),
+                "size": terminal_size
+            },
+            "switch2_out": {
+                "pos": (self.switch2_pos[0] + comp_size * 0.4, self.switch2_pos[1]),
+                "size": terminal_size
+            },
             "bulb_positive": {
                 "pos": (self.bulb_pos[0] - comp_size * 0.4, self.bulb_pos[1] + comp_size * 0.3),
                 "size": terminal_size
             },
             "bulb_negative": {
                 "pos": (self.bulb_pos[0] - comp_size * 0.4, self.bulb_pos[1] - comp_size * 0.3),
+                "size": terminal_size
+            },
+            "bulb2_positive": {
+                "pos": (self.bulb2_pos[0] - comp_size * 0.4, self.bulb2_pos[1] + comp_size * 0.3),
+                "size": terminal_size
+            },
+            "bulb2_negative": {
+                "pos": (self.bulb2_pos[0] - comp_size * 0.4, self.bulb2_pos[1] - comp_size * 0.3),
                 "size": terminal_size
             },
         }
@@ -84,7 +104,9 @@ class CircuitCanvas(Widget):
         """Resetează circuitul."""
         self.connections = []
         self.bulb_lit = False
+        self.bulb2_lit = False
         self.switch_on = False
+        self.switch2_on = False
         self.explosion_active = False
         self.explosion_particles = []
         self._redraw()
@@ -98,8 +120,14 @@ class CircuitCanvas(Widget):
         self._redraw()
 
     def toggle_switch(self):
-        """Comută întrerupătorul."""
+        """Comută primul întrerupător."""
         self.switch_on = not self.switch_on
+        self._redraw()
+        self._check_circuit()
+    
+    def toggle_switch2(self):
+        """Comută al doilea întrerupător."""
+        self.switch2_on = not self.switch2_on
         self._redraw()
         self._check_circuit()
 
@@ -124,7 +152,9 @@ class CircuitCanvas(Widget):
             # Desenează componentele
             self._draw_battery()
             self._draw_switch()
+            self._draw_switch2()
             self._draw_bulb()
+            self._draw_bulb2()
             
             # Desenează explozia dacă e activă
             if self.explosion_active:
@@ -262,6 +292,77 @@ class CircuitCanvas(Widget):
             size=(size * 0.3, size * 0.3)
         )
 
+    def _draw_switch2(self):
+        """Desenează al doilea întrerupător cu imagini clare."""
+        x, y = self.switch2_pos
+        size = self.comp_size
+        
+        # Umbră
+        Color(0, 0, 0, 0.3)
+        Rectangle(
+            pos=(x - size * 0.4 + 4, y - size * 0.25 - 4),
+            size=(size * 0.8, size * 0.5)
+        )
+        
+        # Bază întrerupător
+        Color(0.3, 0.3, 0.3, 1)
+        Rectangle(
+            pos=(x - size * 0.4, y - size * 0.25),
+            size=(size * 0.8, size * 0.5)
+        )
+        
+        # Highlight
+        Color(0.4, 0.4, 0.4, 1)
+        Rectangle(
+            pos=(x - size * 0.4, y + size * 0.15),
+            size=(size * 0.8, size * 0.1)
+        )
+        
+        # Pârghie mare și clară
+        if self.switch2_on:
+            Color(0.1, 0.9, 0.1, 1)  # Verde strălucitor când e ON
+            # Pârghie în poziție ON (înclinată sus)
+            Line(
+                points=[
+                    x - size * 0.3, y,
+                    x + size * 0.3, y + size * 0.25
+                ],
+                width=10
+            )
+            # Indicător ON
+            Color(0.1, 0.9, 0.1, 0.5)
+            Ellipse(
+                pos=(x - size * 0.15, y - size * 0.15),
+                size=(size * 0.3, size * 0.3)
+            )
+        else:
+            Color(0.9, 0.1, 0.1, 1)  # Roșu strălucitor când e OFF
+            # Pârghie în poziție OFF (înclinată jos)
+            Line(
+                points=[
+                    x - size * 0.3, y,
+                    x - size * 0.3, y - size * 0.25
+                ],
+                width=10
+            )
+            # Indicător OFF
+            Color(0.9, 0.1, 0.1, 0.5)
+            Ellipse(
+                pos=(x - size * 0.15, y - size * 0.15),
+                size=(size * 0.3, size * 0.3)
+            )
+        
+        # Terminale (cercuri mari și clare)
+        Color(0.2, 0.2, 0.2, 1)
+        Ellipse(
+            pos=(x - size * 0.4 - size * 0.15, y - size * 0.15),
+            size=(size * 0.3, size * 0.3)
+        )
+        Ellipse(
+            pos=(x + size * 0.4 - size * 0.15, y - size * 0.15),
+            size=(size * 0.3, size * 0.3)
+        )
+
     def _draw_bulb(self):
         """Desenează becul cu imagini clare."""
         x, y = self.bulb_pos
@@ -303,6 +404,77 @@ class CircuitCanvas(Widget):
         
         # Filament interior - mare și clar
         if self.bulb_lit:
+            Color(1.0, 1.0, 0.8, 1)
+        else:
+            Color(0.2, 0.2, 0.2, 1)
+        
+        # Filament simplu (linie în zigzag) - mai gros
+        filament_points = [
+            x - size * 0.3, y + size * 0.2,
+            x, y - size * 0.2,
+            x + size * 0.3, y + size * 0.15
+        ]
+        Line(points=filament_points, width=6)
+        
+        # Baza becului - mare și clară
+        Color(0.15, 0.15, 0.15, 1)
+        Rectangle(
+            pos=(x - size * 0.4, y - size * 0.75),
+            size=(size * 0.8, size * 0.3)
+        )
+        
+        # Terminale (cercuri mari și clare)
+        Color(0.1, 0.1, 0.1, 1)
+        Ellipse(
+            pos=(x - size * 0.4 - size * 0.15, y + size * 0.3 - size * 0.15),
+            size=(size * 0.3, size * 0.3)
+        )
+        Ellipse(
+            pos=(x - size * 0.4 - size * 0.15, y - size * 0.3 - size * 0.15),
+            size=(size * 0.3, size * 0.3)
+        )
+
+    def _draw_bulb2(self):
+        """Desenează al doilea bec cu imagini clare."""
+        x, y = self.bulb2_pos
+        size = self.comp_size
+        
+        if self.bulb2_lit:
+            # Glow când e aprins (straturi multiple, mai strălucitor)
+            for i in range(6):
+                alpha = 0.7 - (i * 0.12)
+                Color(1.0, 0.95, 0.3, alpha)
+                Ellipse(
+                    pos=(x - size * 0.5 - i * size * 0.12, y - size * 0.5 - i * size * 0.12),
+                    size=(size + i * size * 0.24, size + i * size * 0.24)
+                )
+            Color(1.0, 0.98, 0.4, 1)
+        else:
+            Color(0.65, 0.65, 0.65, 1)
+        
+        # Umbră
+        Color(0, 0, 0, 0.25)
+        Ellipse(
+            pos=(x - size * 0.5 + 4, y - size * 0.5 - 4),
+            size=(size, size)
+        )
+        
+        # Corp bec (bulb) - mare și clar
+        Color(1.0, 0.98, 0.4, 1) if self.bulb2_lit else Color(0.65, 0.65, 0.65, 1)
+        Ellipse(
+            pos=(x - size * 0.5, y - size * 0.5),
+            size=(size, size)
+        )
+        
+        # Highlight pe bec
+        Color(1, 1, 1, 0.6)
+        Ellipse(
+            pos=(x - size * 0.3, y + size * 0.2),
+            size=(size * 0.6, size * 0.6)
+        )
+        
+        # Filament interior - mare și clar
+        if self.bulb2_lit:
             Color(1.0, 1.0, 0.8, 1)
         else:
             Color(0.2, 0.2, 0.2, 1)
@@ -441,38 +613,59 @@ class CircuitCanvas(Widget):
         return nearest
 
     def _check_circuit(self):
-        """Verifică dacă circuitul este complet și corect."""
-        # Verifică conexiunile corecte:
-        # 1. battery_positive -> switch_in -> switch_out -> bulb_positive
-        # 2. battery_negative -> bulb_negative
+        """Verifică dacă circuitul este complet și corect pentru ambele circuite paralele."""
+        # Verifică conexiunile corecte pentru două circuite paralele:
+        # Circuit 1: battery_positive -> switch_in -> switch_out -> bulb_positive
+        #            battery_negative -> bulb_negative
+        # Circuit 2: battery_positive -> switch2_in -> switch2_out -> bulb2_positive
+        #            battery_negative -> bulb2_negative
         
-        has_positive_path = False
-        has_negative_path = False
+        # Circuit 1
+        battery_to_switch1 = False
+        switch1_to_bulb1 = False
+        battery_neg_to_bulb1_neg = False
         
-        # Verifică calea pozitivă: battery_positive -> switch_in -> switch_out -> bulb_positive
-        battery_to_switch = False
-        switch_to_bulb = False
+        # Circuit 2
+        battery_to_switch2 = False
+        switch2_to_bulb2 = False
+        battery_neg_to_bulb2_neg = False
         
         for conn in self.connections:
             start = conn["start"]
             end = conn["end"]
             
-            # Plusul bateriei la intrarea întrerupătorului
+            # Circuit 1: Plusul bateriei la intrarea primului întrerupător
             if (start == "battery_positive" and end == "switch_in") or \
                (end == "battery_positive" and start == "switch_in"):
-                battery_to_switch = True
+                battery_to_switch1 = True
             
-            # Ieșirea întrerupătorului la plusul becului
+            # Circuit 1: Ieșirea primului întrerupător la plusul primului bec
             if (start == "switch_out" and end == "bulb_positive") or \
                (end == "switch_out" and start == "bulb_positive"):
-                switch_to_bulb = True
+                switch1_to_bulb1 = True
             
-            # Minusul bateriei direct la minusul becului
+            # Circuit 1: Minusul bateriei direct la minusul primului bec
             if (start == "battery_negative" and end == "bulb_negative") or \
                (end == "battery_negative" and start == "bulb_negative"):
-                has_negative_path = True
+                battery_neg_to_bulb1_neg = True
+            
+            # Circuit 2: Plusul bateriei la intrarea celui de-al doilea întrerupător
+            if (start == "battery_positive" and end == "switch2_in") or \
+               (end == "battery_positive" and start == "switch2_in"):
+                battery_to_switch2 = True
+            
+            # Circuit 2: Ieșirea celui de-al doilea întrerupător la plusul celui de-al doilea bec
+            if (start == "switch2_out" and end == "bulb2_positive") or \
+               (end == "switch2_out" and start == "bulb2_positive"):
+                switch2_to_bulb2 = True
+            
+            # Circuit 2: Minusul bateriei direct la minusul celui de-al doilea bec
+            if (start == "battery_negative" and end == "bulb2_negative") or \
+               (end == "battery_negative" and start == "bulb2_negative"):
+                battery_neg_to_bulb2_neg = True
         
-        has_positive_path = battery_to_switch and switch_to_bulb
+        has_circuit1 = battery_to_switch1 and switch1_to_bulb1 and battery_neg_to_bulb1_neg
+        has_circuit2 = battery_to_switch2 and switch2_to_bulb2 and battery_neg_to_bulb2_neg
         
         # Verifică dacă există conexiuni greșite (doar dacă există conexiuni)
         wrong_connections = False
@@ -481,14 +674,20 @@ class CircuitCanvas(Widget):
                 start = conn["start"]
                 end = conn["end"]
                 
-                # Conexiuni corecte
+                # Conexiuni corecte pentru ambele circuite
                 is_correct = (
                     (start == "battery_positive" and end == "switch_in") or
                     (end == "battery_positive" and start == "switch_in") or
                     (start == "switch_out" and end == "bulb_positive") or
                     (end == "switch_out" and start == "bulb_positive") or
                     (start == "battery_negative" and end == "bulb_negative") or
-                    (end == "battery_negative" and start == "bulb_negative")
+                    (end == "battery_negative" and start == "bulb_negative") or
+                    (start == "battery_positive" and end == "switch2_in") or
+                    (end == "battery_positive" and start == "switch2_in") or
+                    (start == "switch2_out" and end == "bulb2_positive") or
+                    (end == "switch2_out" and start == "bulb2_positive") or
+                    (start == "battery_negative" and end == "bulb2_negative") or
+                    (end == "battery_negative" and start == "bulb2_negative")
                 )
                 
                 # Dacă există o conexiune care nu este corectă
@@ -496,33 +695,37 @@ class CircuitCanvas(Widget):
                     wrong_connections = True
                     break
         
-        # Circuit complet și corect dacă: toate conexiunile sunt corecte și switch e ON
-        if has_positive_path and has_negative_path and self.switch_on:
-            self.explosion_active = False
-            self.explosion_particles = []
+        # Circuit complet și corect dacă: toate conexiunile sunt corecte și switch-urile sunt ON
+        if has_circuit1 and self.switch_on:
             self.bulb_lit = True
+        else:
+            self.bulb_lit = False
+        
+        if has_circuit2 and self.switch2_on:
+            self.bulb2_lit = True
+        else:
+            self.bulb2_lit = False
+        
+        # Dacă există conexiuni greșite ȘI becurile nu se aprind -> explozie
+        if wrong_connections and not (self.bulb_lit or self.bulb2_lit):
+            self.explosion_active = True
+            self._create_explosion()
             self._redraw()
             # Notifică aplicația
             app = App.get_running_app()
-            if hasattr(app, "on_circuit_complete"):
-                Clock.schedule_once(lambda dt: app.on_circuit_complete(), 2.0)
+            if hasattr(app, "on_circuit_explosion"):
+                Clock.schedule_once(lambda dt: app.on_circuit_explosion(), 0.1)
         else:
-            # Dacă există conexiuni greșite ȘI becul nu se aprinde -> explozie
-            if wrong_connections and not self.bulb_lit:
-                self.explosion_active = True
-                self._create_explosion()
-                self.bulb_lit = False
-                self._redraw()
-                # Notifică aplicația
+            # Nu există conexiuni greșite sau nu există conexiuni deloc
+            self.explosion_active = False
+            self.explosion_particles = []
+            self._redraw()
+            
+            # Notifică aplicația dacă ambele circuite funcționează
+            if has_circuit1 and has_circuit2 and self.switch_on and self.switch2_on:
                 app = App.get_running_app()
-                if hasattr(app, "on_circuit_explosion"):
-                    Clock.schedule_once(lambda dt: app.on_circuit_explosion(), 0.1)
-            else:
-                # Nu există conexiuni greșite sau nu există conexiuni deloc
-                self.explosion_active = False
-                self.explosion_particles = []
-                self.bulb_lit = False
-                self._redraw()
+                if hasattr(app, "on_circuit_complete"):
+                    Clock.schedule_once(lambda dt: app.on_circuit_complete(), 2.0)
     
     def _create_explosion(self):
         """Creează particule pentru efectul de explozie."""

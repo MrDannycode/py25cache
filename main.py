@@ -356,7 +356,7 @@ class KioskApp(App):
             canvas.clear_lines()
 
     def circuit_toggle_switch(self):
-        """Comută întrerupătorul."""
+        """Comută primul întrerupător."""
         canvas = None
         if self.root:
             try:
@@ -367,10 +367,27 @@ class KioskApp(App):
         
         if canvas:
             canvas.toggle_switch()
-            if canvas.bulb_lit:
+            if canvas.bulb_lit or canvas.bulb2_lit:
                 self.circuit_status_text = "Circuit complet! Becul s-a aprins!"
             else:
-                self.circuit_status_text = "Conectează toate firele și pornește întrerupătorul."
+                self.circuit_status_text = "Conectează toate firele și pornește întrerupătoarele."
+    
+    def circuit_toggle_switch2(self):
+        """Comută al doilea întrerupător."""
+        canvas = None
+        if self.root:
+            try:
+                screen = self.root.get_screen("circuit")
+                canvas = screen.ids.get("circuit_canvas")
+            except Exception:
+                canvas = None
+        
+        if canvas:
+            canvas.toggle_switch2()
+            if canvas.bulb_lit or canvas.bulb2_lit:
+                self.circuit_status_text = "Circuit complet! Becul s-a aprins!"
+            else:
+                self.circuit_status_text = "Conectează toate firele și pornește întrerupătoarele."
 
     def on_circuit_complete(self):
         """Callback când circuitul este complet."""

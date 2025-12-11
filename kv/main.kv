@@ -9,15 +9,16 @@
     background_down: ''
     background_color: 0.94, 0.96, 1, 1
     color: 0.08, 0.12, 0.22, 1
-    padding: dp(10), dp(8)
+    padding: dp(8), dp(6)
+    font_size: "18sp"
     canvas.before:
         # subtle drop shadow for 3D effect
         Color:
             rgba: 0, 0, 0, 0.25
         RoundedRectangle:
             pos: self.x + dp(1), self.y - dp(2)
-            size: self.width - dp(2), self.height + dp(3)
-            radius: [dp(12), dp(12), dp(12), dp(12)]
+            size: self.width - dp(2), self.height + dp(2.5)
+            radius: [dp(10), dp(10), dp(10), dp(10)]
         # main face
         Color:
             rgba: self.background_color
@@ -25,14 +26,14 @@
             # inset to keep face inside the neon border
             pos: self.x + dp(2), self.y + dp(2)
             size: self.width - dp(4), self.height - dp(4)
-            radius: [dp(12), dp(12), dp(12), dp(12)]
+            radius: [dp(10), dp(10), dp(10), dp(10)]
     canvas.after:
         # neon outline
         Color:
             rgba: 0.05, 0.78, 1, 1
         Line:
             width: dp(3)
-            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(12), dp(12), dp(12), dp(12))
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(10), dp(10), dp(10), dp(10))
 
 ScreenManager:
     id: screen_manager
@@ -72,12 +73,16 @@ ScreenManager:
             text: "Universitatea Dunărea de Jos Galați"
             font_size: "46sp"
             bold: True
+            outline_width: 2
+            outline_color: 0, 0, 0, 0.55
             size_hint_y: 0.2
 
         # Status prezență
         Label:
             text: "Apropie-te de ecran pentru a începe" if not app.person_present else "Bun venit! Atinge un buton pentru a explora."
             font_size: "24sp"
+            outline_width: 1.5
+            outline_color: 0, 0, 0, 0.6
             size_hint_y: 0.15
 
         # Butoanele principale

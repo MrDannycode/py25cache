@@ -5,7 +5,7 @@
 
 ScreenManager:
     id: screen_manager
-    transition: FadeTransition()
+    transition: FadeTransition(duration=0.3)
     HomeScreen:
         name: "home"
     InfoScreen:
@@ -56,40 +56,60 @@ ScreenManager:
 
             Button:
                 text: "Informații despre universitate"
-                font_size: "20sp"
+                font_size: "22sp"
+                background_normal: ''
+                background_color: 0.95, 0.95, 1, 1
+                color: 0.1, 0.1, 0.2, 1
+                border: (50,50,50,50)
                 on_press: root.manager.current = "info"
                 disabled: not app.person_present
 
             Button:
-                text: "Test de personalitate"
-                font_size: "20sp"
+                text: "Oracolul AI"
+                font_size: "22sp"
+                background_normal: ''
+                background_color: 0.95, 0.95, 1, 1
+                color: 0.1, 0.1, 0.2, 1
+                border: (50,50,50,50)
                 on_press: root.manager.current = "personality"
                 disabled: not app.person_present
 
             Button:
-                text: "Oameni de știință care îți seamănă"
+                text: "Geniul tău"
                 text_size: self.size
                 halign: "center"
                 valign: "middle"
-                font_size: "20sp"
+                font_size: "22sp"
+                background_normal: ''
+                background_color: 0.95, 0.95, 1, 1
+                color: 0.1, 0.1, 0.2, 1
+                border: (50,50,50,50)
                 on_press: root.manager.current = "scientist"
                 disabled: not app.person_present
 
             Button:
-                text: "Joacă piatră-foarfecă-hârtie la cameră"
+                text: "Piatra-Foarfecă-AI"
                 text_size: self.size
                 halign: "center"
                 valign: "middle"
-                font_size: "20sp"
+                font_size: "22sp"
+                background_normal: ''
+                background_color: 0.95, 0.95, 1, 1
+                color: 0.1, 0.1, 0.2, 1
+                border: (50,50,50,50)
                 on_press: root.manager.current = "rps"
                 disabled: not app.person_present
 
             Button:
-                text: "Labirint (touch)"
+                text: "Labirintul secretelor"
                 text_size: self.size
                 halign: "center"
                 valign: "middle"
-                font_size: "20sp"
+                font_size: "22sp"
+                background_normal: ''
+                background_color: 0.95, 0.95, 1, 1
+                color: 0.1, 0.1, 0.2, 1
+                border: (50,50,50,50)
                 on_press: root.manager.current = "maze"
                 disabled: not app.person_present
 
@@ -134,7 +154,7 @@ ScreenManager:
             spacing: dp(16)
 
             Button:
-                text: "Deschide site-ul universității"
+                text: "Mai multe informații"
                 font_size: "20sp"
                 on_press: app.open_university_website()
 

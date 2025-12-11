@@ -120,8 +120,7 @@ class KioskApp(App):
     # --- Info screen ---
     def open_university_website(self):
         """Deschide site-ul universității în browser."""
-        # Înlocuiește cu link-ul real al universității tale
-        url = "https://www.exemplu-universitate.ro"
+        url = "https://www.ugal.ro"
         try:
             webbrowser.open(url)
         except Exception as exc:

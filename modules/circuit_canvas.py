@@ -3,7 +3,7 @@ from typing import List, Tuple, Optional
 
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
-from kivy.graphics import Color, Line
+from kivy.graphics import Color, Line, Rectangle
 from kivy.app import App
 
 
@@ -45,16 +45,33 @@ class CircuitCanvas(Widget):
             self._add_component(name, icon, spot)
 
     def _add_component(self, name: str, icon: str, spot: Tuple[float, float]):
+        colors = {
+            "battery": (0.2, 0.7, 0.2, 1),
+            "led": (0.95, 0.8, 0.2, 1),
+            "transistor": (0.4, 0.6, 0.9, 1),
+            "diode": (0.9, 0.4, 0.4, 1),
+        }
+        label_map = {
+            "battery": "BAT",
+            "led": "BEC",
+            "transistor": "TR",
+            "diode": "DIO",
+        }
         w, h = self._component_size
         x = self.x + spot[0] * (self.width or 1) - w / 2
         y = self.y + spot[1] * (self.height or 1) - h / 2
         lbl = Label(
-            text=icon,
-            font_size="48sp",
+            text=label_map.get(name, icon),
+            font_size="18sp",
+            bold=True,
+            color=(0, 0, 0, 1),
             size_hint=(None, None),
             size=(w, h),
             pos=(x, y),
         )
+        with lbl.canvas.before:
+            Color(*colors.get(name, (0.8, 0.8, 0.8, 1)))
+            Rectangle(pos=lbl.pos, size=lbl.size)
         self.add_widget(lbl)
         self.components.append({"name": name, "icon": icon, "pos": (x, y), "size": (w, h), "widget": lbl})
 

@@ -1,5 +1,8 @@
 import random
 import time
+import subprocess
+import os
+import tempfile
 from typing import Dict
 
 import cv2
@@ -9,13 +12,56 @@ import numpy as np
 class RPSCameraGame:
     """
     Joc piatră-foarfecă-hârtie folosind conturul mâinii.
-    Heuristic simplu: număr degete ridicate -> hartie (>=4), foarfecă (~2),
-    altfel piatră.
+    Folosește rpicam-hello pentru capturarea imaginilor.
     """
 
     MOVES = ["piatră", "foarfecă", "hârtie"]
 
+    def _capture_frame_rpicam(self) -> np.ndarray:
+        """
+        Capturează un frame folosind rpicam-hello --timeout 0.
+        Returnează imaginea ca numpy array (BGR pentru OpenCV).
+        """
+        # Creează un fișier temporar pentru imagine
+        temp_file = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+        temp_path = temp_file.name
+        temp_file.close()
+        
+        try:
+            # Rulează rpicam-hello pentru a captura o imagine
+            cmd = [
+                "rpicam-hello",
+                "--timeout", "0",
+                "--output", temp_path
+            ]
+            
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            
+            if result.returncode != 0:
+                raise RuntimeError(f"rpicam-hello a eșuat: {result.stderr}")
+            
+            # Citește imaginea capturată
+            frame = cv2.imread(temp_path)
+            if frame is None:
+                raise RuntimeError("Nu am putut citi imaginea capturată.")
+            
+            return frame
+            
+        finally:
+            # Șterge fișierul temporar
+            if os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
+
     def _detect_move(self, frame) -> str:
+        """Detectează mutarea jucătorului din frame."""
         # Focus pe centrul imaginii pentru a evita zgomot de fundal
         h, w, _ = frame.shape
         cx, cy = w // 2, h // 2
@@ -61,24 +107,27 @@ class RPSCameraGame:
             return "foarfecă"
         return "piatră"
 
-    def _warm_capture(self, cap, attempts: int = 5, delay: float = 0.1):
-        frame = None
-        for _ in range(attempts):
-            ret, frame = cap.read()
-            if ret and frame is not None:
-                return frame
-            time.sleep(delay)
+    def _warm_capture(self, attempts: int = 3, delay: float = 0.2):
+        """Face mai multe încercări de captură pentru a se asigura că primește un frame valid."""
+        for attempt in range(attempts):
+            try:
+                frame = self._capture_frame_rpicam()
+                if frame is not None and frame.size > 0:
+                    return frame
+            except Exception as e:
+                if attempt == attempts - 1:
+                    raise
+                time.sleep(delay)
         return None
 
     def play_round(self, camera_index: int = 0) -> Dict:
-        cap = cv2.VideoCapture(camera_index)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        if not cap.isOpened():
-            raise RuntimeError(f"Nu pot deschide camera {camera_index}")
-
+        """
+        Joacă o rundă. Parametrul camera_index este ignorat, 
+        folosim rpicam-hello care nu necesită index.
+        """
         try:
-            frame = self._warm_capture(cap)
+            # Capturează frame folosind rpicam-hello
+            frame = self._warm_capture()
             if frame is None:
                 raise RuntimeError("Nu am putut citi un frame de la cameră.")
 
@@ -86,8 +135,12 @@ class RPSCameraGame:
             ai_move = random.choice(self.MOVES)
             result = self._winner(player_move, ai_move)
             return {"player_move": player_move, "ai_move": ai_move, "result": result}
-        finally:
-            cap.release()
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Eroare la rularea rpicam-hello: {e}")
+        except FileNotFoundError:
+            raise RuntimeError("rpicam-hello nu este instalat sau nu este în PATH.")
+        except Exception as e:
+            raise RuntimeError(f"Eroare cameră: {e}")
 
     def _winner(self, player: str, ai: str) -> str:
         if player == ai:

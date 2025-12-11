@@ -7,8 +7,8 @@
 <Button>:
     background_normal: ''
     background_down: ''
-    background_color: 0.94, 0.96, 1, 1
-    color: 0.08, 0.12, 0.22, 1
+    background_color: 1.0, 0.95, 0.85, 1
+    color: 0.25, 0.15, 0.10, 1
     padding: dp(8), dp(6)
     font_size: "18sp"
     canvas.before:
@@ -98,7 +98,7 @@ ScreenManager:
                 background_color: 0.95, 0.95, 1, 1
                 color: 0.1, 0.1, 0.2, 1
                 border: (50,50,50,50)
-                on_press: root.manager.current = "info"
+                on_press: app.open_university_website()
                 disabled: not app.person_present
 
             Button:
@@ -169,10 +169,11 @@ ScreenManager:
 
         canvas.before:
             Color:
-                rgba: 0.16, 0.24, 0.40, 1
+                rgba: 1, 1, 1, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
+                source: 'assets/images/WhatsApp Image 2025-12-11 at 22.40.51.jpeg'
 
         Label:
             text: "Informații despre universitate"
@@ -210,7 +211,7 @@ ScreenManager:
 
         canvas.before:
             Color:
-                rgba: 0.11, 0.24, 0.30, 1
+                rgba: 0.95, 0.88, 0.75, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
@@ -288,7 +289,7 @@ ScreenManager:
 
         canvas.before:
             Color:
-                rgba: 0.14, 0.18, 0.32, 1
+                rgba: 0.95, 0.88, 0.75, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
@@ -327,7 +328,7 @@ ScreenManager:
 
         canvas.before:
             Color:
-                rgba: 0.10, 0.22, 0.32, 1
+                rgba: 0.95, 0.88, 0.75, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
@@ -366,7 +367,7 @@ ScreenManager:
 
         canvas.before:
             Color:
-                rgba: 0.07, 0.18, 0.16, 1
+                rgba: 0.95, 0.88, 0.75, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
@@ -480,7 +481,7 @@ ScreenManager:
 
         canvas.before:
             Color:
-                rgba: 0.18, 0.14, 0.32, 1
+                rgba: 0.95, 0.88, 0.75, 1
             Rectangle:
                 pos: self.pos
                 size: self.size

@@ -2,6 +2,7 @@
 #:import dp kivy.metrics.dp
 #:import FadeTransition kivy.uix.screenmanager.FadeTransition
 #:import CircuitCanvas modules.circuit_canvas.CircuitCanvas
+#:import MazeView modules.maze_view.MazeView
 
 ScreenManager:
     id: screen_manager
@@ -324,79 +325,103 @@ ScreenManager:
     BoxLayout:
         orientation: "vertical"
         padding: dp(24)
-        spacing: dp(24)
+        spacing: dp(20)
 
         canvas.before:
             Color:
-                rgba: 0.10, 0.26, 0.20, 1
+                rgba: 0.07, 0.18, 0.16, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
 
         Label:
-            text: "Labirint (touch)"
-            font_size: "36sp"
-            size_hint_y: 0.15
+            text: "Labirint interactiv"
+            font_size: "38sp"
+            bold: True
+            size_hint_y: 0.14
 
         Label:
             text: app.maze_status_text
             font_size: "18sp"
-            size_hint_y: 0.1
-
-        Label:
-            text: "Legendă: 🙂 = start, ★ = ieșire, blocuri pline = pereți"
-            font_size: "16sp"
             size_hint_y: 0.08
 
         BoxLayout:
-            size_hint_y: 0.45
-            padding: dp(8)
+            size_hint_y: 0.6
+            padding: dp(10)
+            spacing: dp(10)
             canvas.before:
                 Color:
-                    rgba: 0.8, 0.8, 0.9, 1
+                    rgba: 0.85, 0.90, 0.94, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+                Color:
+                    rgba: 1, 1, 1, 0.2
                 Line:
                     width: 2
                     rectangle: (self.x, self.y, self.width, self.height)
 
+            MazeView:
+                id: maze_view
+                grid: app.maze_grid
+                on_swipe: app.move_maze(args[1])
+
+        BoxLayout:
+            size_hint_y: 0.1
+            spacing: dp(12)
+
             Label:
-                text: app.maze_display_text
-                font_size: "20sp"
-                markup: True
-                halign: "center"
+                text: "Legende: pereți = blocuri întunecate | ★ ieșire | 🙂 tu"
+                font_size: "16sp"
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+            Label:
+                text: "Glisează pe hartă sau folosește săgețile"
+                font_size: "16sp"
+                halign: "right"
                 valign: "middle"
                 text_size: self.size
 
         GridLayout:
             cols: 3
             spacing: dp(12)
-            size_hint_y: 0.2
+            size_hint_y: 0.16
 
             Widget:
             Button:
-                text: "^"
+                text: "↑"
                 font_size: "26sp"
+                background_color: 0.16, 0.45, 0.40, 1
+                background_normal: ''
                 on_press: app.move_maze("up")
             Widget:
 
             Button:
-                text: "<"
+                text: "←"
                 font_size: "26sp"
+                background_color: 0.16, 0.45, 0.40, 1
+                background_normal: ''
                 on_press: app.move_maze("left")
             Widget:
             Button:
-                text: ">"
+                text: "→"
                 font_size: "26sp"
+                background_color: 0.16, 0.45, 0.40, 1
+                background_normal: ''
                 on_press: app.move_maze("right")
 
             Widget:
             Button:
-                text: "v"
+                text: "↓"
                 font_size: "26sp"
+                background_color: 0.16, 0.45, 0.40, 1
+                background_normal: ''
                 on_press: app.move_maze("down")
             Widget:
 
         BoxLayout:
-            size_hint_y: 0.15
+            size_hint_y: 0.14
             spacing: dp(16)
 
             Button:

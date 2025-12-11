@@ -83,6 +83,7 @@ class KioskApp(App):
     # Proprietăți pentru Labirint
     maze_display_text = StringProperty("")
     maze_status_text = StringProperty("Găsește ieșirea!")
+    maze_grid = ListProperty([])
 
     # Proprietăți pentru Circuit
     circuit_board_text = StringProperty("")
@@ -205,11 +206,13 @@ class KioskApp(App):
     def _reset_maze(self):
         self.maze_game.reset()
         self.maze_display_text = self.maze_game.render()
+        self.maze_grid = [row[:] for row in self.maze_game.grid]
         self.maze_status_text = "Găsește ieșirea!"
 
     def move_maze(self, direction: str):
         status = self.maze_game.move(direction)
         self.maze_display_text = self.maze_game.render()
+        self.maze_grid = [row[:] for row in self.maze_game.grid]
         if status == "win":
             self.maze_status_text = "Bravo! Ai găsit ieșirea. Apasă «Repornește»."
             self._show_maze_win_popup()

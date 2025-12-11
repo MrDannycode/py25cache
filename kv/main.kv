@@ -408,51 +408,28 @@ ScreenManager:
             size_hint_y: 0.15
 
         Label:
-            text: "Plasează firele sus și jos, apoi pornește întrerupătorul.\nCând circuitul e complet, becul se aprinde."
+            text: "Trage cu degetul fire între simboluri: 🔋 baterie, 💡 bec, ⚡ tranzistor, ⇉ diodă.\nFă un traseu de la baterie la bec."
             font_size: "18sp"
             halign: "center"
             valign: "middle"
             text_size: self.width * 0.95, None
             size_hint_y: 0.15
 
-        Label:
-            text: app.circuit_board_text
-            font_size: "20sp"
-            markup: True
-            halign: "center"
-            valign: "middle"
-            text_size: self.size
-            size_hint_y: 0.35
+        CircuitCanvas:
+            id: circuit_canvas
+            size_hint_y: 0.55
 
         Label:
             text: app.circuit_status_text
             font_size: "18sp"
             size_hint_y: 0.1
 
-        GridLayout:
-            cols: 3
-            spacing: dp(12)
-            size_hint_y: 0.2
-
-            Button:
-                text: "Pune fir sus"
-                font_size: "18sp"
-                on_press: app.circuit_place_wire_top()
-            Button:
-                text: "Comută întrerupător"
-                font_size: "18sp"
-                on_press: app.circuit_toggle_switch()
-            Button:
-                text: "Pune fir jos"
-                font_size: "18sp"
-                on_press: app.circuit_place_wire_bottom()
-
         BoxLayout:
-            size_hint_y: 0.15
+            size_hint_y: 0.2
             spacing: dp(16)
 
             Button:
-                text: "Repornește"
+                text: "Resetează"
                 font_size: "20sp"
                 on_press: app._reset_circuit()
 

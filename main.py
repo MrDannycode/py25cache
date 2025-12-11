@@ -24,6 +24,7 @@ from modules.scientist_matcher import ScientistMatcher
 from modules.rps_camera_game import RPSCameraGame
 from modules.maze_game import MazeGame
 from modules.circuit_game import CircuitGame
+from modules.circuit_canvas import CircuitCanvas
 
 
 # --- Screen-uri de bază ---
@@ -290,6 +291,10 @@ class KioskApp(App):
         self.circuit_game.reset()
         self.circuit_board_text = self.circuit_game.render()
         self.circuit_status_text = "Plasează firele (sus și jos) și pornește întrerupătorul."
+        canvas = self.root.ids.get("circuit_canvas") if self.root else None
+        if canvas:
+            canvas.reset_components()
+            canvas.clear_lines()
 
     def circuit_place_wire_top(self):
         status = self.circuit_game.place_wire("top")
@@ -313,6 +318,20 @@ class KioskApp(App):
             self.circuit_status_text = "Pornește întrerupătorul."
         else:
             self.circuit_status_text = "Continuă, aproape ai terminat."
+
+    # Circuit desenat cu degetul
+    def on_circuit_line_drawn(self, start_comp, end_comp):
+        """
+        Callback din CircuitCanvas: utilizatorul a trasat o linie.
+        Valid: baterie -> led.
+        """
+        if not start_comp or not end_comp:
+            self.circuit_status_text = "Trasează de la baterie către bec."
+            return
+        if start_comp == "battery" and end_comp == "led":
+            self.circuit_status_text = "Circuit complet! Becul s-a aprins 💡"
+        else:
+            self.circuit_status_text = "Încearcă să unești baterie → bec."
 
     def on_stop(self):
         """Oprește detectorul (nefolosit acum) la ieșirea din aplicație."""

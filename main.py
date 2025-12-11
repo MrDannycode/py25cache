@@ -412,10 +412,23 @@ class KioskApp(App):
     def on_circuit_explosion(self):
         """Callback când circuitul are conexiuni greșite."""
         self.circuit_status_text = "AI LUAT FOC! Conexiunile sunt greșite!"
-        self._show_circuit_win_popup()
+        # Nu afișa popup-ul de felicitări la explozie
 
     def _show_circuit_win_popup(self):
         """Afișează popup cu felicitări când circuitul este complet."""
+        # Verifică dacă există explozie înainte de a afișa popup-ul
+        canvas = None
+        if self.root:
+            try:
+                screen = self.root.get_screen("circuit")
+                canvas = screen.ids.get("circuit_canvas")
+            except Exception:
+                canvas = None
+        
+        if canvas and canvas.explosion_active:
+            # Nu afișa popup dacă există explozie
+            return
+        
         content = BoxLayout(orientation="vertical", padding=16, spacing=12)
         message = Label(
             text="Felicitări! Ai conectat corect circuitul!\n\nBecul s-a aprins și circuitul funcționează perfect!",

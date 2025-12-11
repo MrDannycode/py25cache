@@ -42,10 +42,10 @@ class CircuitCanvas(Widget):
         # Bateria rotită la 90 de grade, întrerupătoarele și becurile unul peste altul (vertical)
         # Distanță mare între componente pentru a evita suprapunerea
         self.battery_pos = (w * 0.15, h * 0.9)
-        self.switch_pos = (w * 0.5, h * 0.95)  # Primul întrerupător foarte sus
-        self.switch2_pos = (w * 0.5, h * 0.6)  # Al doilea întrerupător jos (distanță mare)
-        self.bulb_pos = (w * 0.8, h * 0.95)  # Primul bec foarte sus
-        self.bulb2_pos = (w * 0.8, h * 0.6)  # Al doilea bec jos (distanță mare)
+        self.switch_pos = (w * 0.5, h * 1.0)  # Primul întrerupător la 100% înălțime (foarte sus)
+        self.switch2_pos = (w * 0.5, h * 0.1)  # Al doilea întrerupător la 10% înălțime (foarte jos)
+        self.bulb_pos = (w * 0.8, h * 1.0)  # Primul bec la 100% înălțime (foarte sus)
+        self.bulb2_pos = (w * 0.8, h * 0.1)  # Al doilea bec la 10% înălțime (foarte jos)
         self.comp_size = comp_size
         
         # Terminale mari pentru conexiuni (zone de touch mari)

@@ -81,7 +81,7 @@ class KioskApp(App):
 
     # Proprietăți pentru Circuit
     circuit_board_text = StringProperty("")
-    circuit_status_text = StringProperty("Trage componentele în sloturi.")
+    circuit_status_text = StringProperty("Plasează firele și pornește întrerupătorul.")
 
     def build(self):
         self.title = "Universitate - Kiosk"
@@ -216,21 +216,30 @@ class KioskApp(App):
     def _reset_circuit(self):
         self.circuit_game.reset()
         self.circuit_board_text = self.circuit_game.render()
-        self.circuit_status_text = "Trage componentele în sloturile corecte."
+        self.circuit_status_text = "Plasează firele (sus și jos) și pornește întrerupătorul."
 
-    def place_circuit(self, slot: str, component: str):
-        status = self.circuit_game.place(slot, component)
+    def circuit_place_wire_top(self):
+        status = self.circuit_game.place_wire("top")
+        self._update_circuit_status(status)
+
+    def circuit_place_wire_bottom(self):
+        status = self.circuit_game.place_wire("bottom")
+        self._update_circuit_status(status)
+
+    def circuit_toggle_switch(self):
+        status = self.circuit_game.toggle_switch()
+        self._update_circuit_status(status)
+
+    def _update_circuit_status(self, status: str):
         self.circuit_board_text = self.circuit_game.render()
         if status == "win":
-            self.circuit_status_text = "Corect! LED-ul s-a aprins ✨"
-        elif status == "ok":
-            self.circuit_status_text = "Continuă, mai sunt componente de plasat."
-        elif status == "wrong":
-            self.circuit_status_text = "Componentă greșită pentru slot."
-        elif status == "filled":
-            self.circuit_status_text = "Slot ocupat. Resetează sau alege alt slot."
+            self.circuit_status_text = "Circuit complet! Becul s-a aprins 💡"
+        elif status == "need_wires":
+            self.circuit_status_text = "Mai pune firele sus și jos."
+        elif status == "need_switch":
+            self.circuit_status_text = "Pornește întrerupătorul."
         else:
-            self.circuit_status_text = "Încearcă din nou."
+            self.circuit_status_text = "Continuă, aproape ai terminat."
 
     def on_stop(self):
         """Oprește detectorul (nefolosit acum) la ieșirea din aplicație."""

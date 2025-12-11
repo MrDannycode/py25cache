@@ -399,7 +399,7 @@ ScreenManager:
             size_hint_y: 0.15
 
         Label:
-            text: "Plasează bateria, rezistorul și LED-ul în sloturile corecte.\nCând e corect, LED-ul virtual se aprinde."
+            text: "Plasează firele sus și jos, apoi pornește întrerupătorul.\nCând circuitul e complet, becul se aprinde."
             font_size: "18sp"
             halign: "center"
             valign: "middle"
@@ -409,6 +409,7 @@ ScreenManager:
         Label:
             text: app.circuit_board_text
             font_size: "20sp"
+            markup: True
             halign: "center"
             valign: "middle"
             text_size: self.size
@@ -425,17 +426,17 @@ ScreenManager:
             size_hint_y: 0.2
 
             Button:
-                text: "Slot 1 \n(+ sursă)"
+                text: "Pune fir sus"
                 font_size: "18sp"
-                on_press: app.place_circuit("slot1", "baterie")
+                on_press: app.circuit_place_wire_top()
             Button:
-                text: "Slot 2 \n(rezistor)"
+                text: "Comută întrerupător"
                 font_size: "18sp"
-                on_press: app.place_circuit("slot2", "rezistor")
+                on_press: app.circuit_toggle_switch()
             Button:
-                text: "Slot 3 \n(LED)"
+                text: "Pune fir jos"
                 font_size: "18sp"
-                on_press: app.place_circuit("slot3", "led")
+                on_press: app.circuit_place_wire_bottom()
 
         BoxLayout:
             size_hint_y: 0.15

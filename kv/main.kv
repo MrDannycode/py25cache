@@ -593,15 +593,15 @@ ScreenManager:
 
         Label:
             text: "Conectează firele trăgând cu degetul de la terminalele componentei:\n1. De la terminalul + al bateriei la terminalul de intrare al întrerupătorului\n2. De la terminalul de ieșire al întrerupătorului la terminalele becului\n3. Apasă butonul pentru a porni întrerupătorul"
-            font_size: "15sp"
+            font_size: "14sp"
             halign: "center"
             valign: "middle"
             text_size: self.width * 0.95, None
-            size_hint_y: 0.18
+            size_hint_y: 0.15
 
         CircuitCanvas:
             id: circuit_canvas
-            size_hint_y: 0.5
+            size_hint_y: 0.6
 
         Label:
             text: app.circuit_status_text

@@ -33,10 +33,10 @@ class CircuitCanvas(Widget):
         # Componente mult mai mari pentru touchscreen
         comp_size = min(w, h) * 0.4
         
-        # Poziții fixe, mutate mai sus pentru conexiuni mai ușoare
-        self.battery_pos = (w * 0.15, h * 0.8)
-        self.switch_pos = (w * 0.5, h * 0.8)
-        self.bulb_pos = (w * 0.85, h * 0.8)
+        # Poziții fixe, mutate foarte sus pentru display touch de 7 inchi
+        self.battery_pos = (w * 0.15, h * 0.9)
+        self.switch_pos = (w * 0.5, h * 0.9)
+        self.bulb_pos = (w * 0.85, h * 0.9)
         self.comp_size = comp_size
         
         # Terminale mari pentru conexiuni (zone de touch mari)

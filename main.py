@@ -88,7 +88,7 @@ class KioskApp(App):
     circuit_status_text = StringProperty("Plasează firele și pornește întrerupătorul.")
 
     def build(self):
-        self.title = "Universitate - Kiosk"
+        self.title = "Universitatea Dunărea de Jos Galați"
         kv_path = os.path.join(os.path.dirname(__file__), "kv", "main.kv")
         # Permite schimbarea camerei din variabilă de mediu (ex: CAMERA_INDEX=1)
         self.camera_index = int(os.environ.get("CAMERA_INDEX", "0"))

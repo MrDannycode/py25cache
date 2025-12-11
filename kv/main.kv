@@ -1,0 +1,221 @@
+#:kivy 2.3.0
+#:import dp kivy.metrics.dp
+#:import FadeTransition kivy.uix.screenmanager.FadeTransition
+
+ScreenManager:
+    id: screen_manager
+    transition: FadeTransition()
+    HomeScreen:
+        name: "home"
+    InfoScreen:
+        name: "info"
+    PersonalityTestScreen:
+        name: "personality"
+    ScientistMatcherScreen:
+        name: "scientist"
+    RPSCameraGameScreen:
+        name: "rps"
+
+
+<HomeScreen>:
+    BoxLayout:
+        orientation: "vertical"
+        padding: dp(24)
+        spacing: dp(24)
+
+        canvas.before:
+            Color:
+                rgba: 0.05, 0.05, 0.1, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        # Titlu
+        Label:
+            text: "Universitatea XYZ"
+            font_size: "48sp"
+            bold: True
+            size_hint_y: 0.2
+
+        # Status prezență
+        Label:
+            text: "Apropie-te de ecran pentru a începe" if not app.person_present else "Bun venit! Atinge un buton pentru a explora."
+            font_size: "24sp"
+            size_hint_y: 0.15
+
+        # Butoanele principale
+        GridLayout:
+            cols: 2
+            spacing: dp(16)
+            size_hint_y: 0.65
+
+            Button:
+                text: "Informații despre universitate"
+                font_size: "20sp"
+                on_press: root.manager.current = "info"
+                disabled: not app.person_present
+
+            Button:
+                text: "Test de personalitate"
+                font_size: "20sp"
+                on_press: root.manager.current = "personality"
+                disabled: not app.person_present
+
+            Button:
+                text: "Oameni de știință care îți seamănă"
+                text_size: self.size
+                halign: "center"
+                valign: "middle"
+                font_size: "20sp"
+                on_press: root.manager.current = "scientist"
+                disabled: not app.person_present
+
+            Button:
+                text: "Joacă piatră-foarfecă-hârtie la cameră"
+                text_size: self.size
+                halign: "center"
+                valign: "middle"
+                font_size: "20sp"
+                on_press: root.manager.current = "rps"
+                disabled: not app.person_present
+
+
+<InfoScreen>:
+    BoxLayout:
+        orientation: "vertical"
+        padding: dp(24)
+        spacing: dp(24)
+
+        canvas.before:
+            Color:
+                rgba: 0.08, 0.08, 0.12, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Label:
+            text: "Informații despre universitate"
+            font_size: "36sp"
+            size_hint_y: 0.2
+
+        Label:
+            text: "Aici poți adăuga o descriere a universității, facultăți, avantaje,\\nprograme de studiu, oportunități internaționale etc."
+            font_size: "20sp"
+            text_size: self.width * 0.9, None
+            halign: "center"
+            valign: "middle"
+            size_hint_y: 0.6
+
+        BoxLayout:
+            size_hint_y: 0.2
+            spacing: dp(16)
+
+            Button:
+                text: "Deschide site-ul universității"
+                font_size: "20sp"
+                on_press: app.open_university_website()
+
+            Button:
+                text: "Înapoi"
+                font_size: "20sp"
+                on_press: app.go_home()
+
+
+<PersonalityTestScreen>:
+    BoxLayout:
+        orientation: "vertical"
+        padding: dp(24)
+        spacing: dp(24)
+
+        canvas.before:
+            Color:
+                rgba: 0.05, 0.1, 0.12, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Label:
+            text: "Test de personalitate"
+            font_size: "36sp"
+            size_hint_y: 0.2
+
+        Label:
+            text: "Aici va fi implementat testul de personalitate.\\n\\nPoți înlocui acest ecran cu UI-ul tău care folosește logica din modules/personality_test.py."
+            font_size: "20sp"
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+            size_hint_y: 0.6
+
+        Button:
+            text: "Înapoi"
+            font_size: "20sp"
+            size_hint_y: 0.2
+            on_press: app.go_home()
+
+
+<ScientistMatcherScreen>:
+    BoxLayout:
+        orientation: "vertical"
+        padding: dp(24)
+        spacing: dp(24)
+
+        canvas.before:
+            Color:
+                rgba: 0.07, 0.07, 0.15, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Label:
+            text: "Oameni de știință care îți seamănă"
+            font_size: "36sp"
+            size_hint_y: 0.2
+
+        Label:
+            text: "Aici vei folosi camera pentru a face o poză elevului, iar apoi vei afișa oameni de știință aleși aleator care seamănă cu el/ea.\\n\\nUI-ul concret îl poți implementa ulterior în modules/scientist_matcher.py."
+            font_size: "20sp"
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+            size_hint_y: 0.6
+
+        Button:
+            text: "Înapoi"
+            font_size: "20sp"
+            size_hint_y: 0.2
+            on_press: app.go_home()
+
+
+<RPSCameraGameScreen>:
+    BoxLayout:
+        orientation: "vertical"
+        padding: dp(24)
+        spacing: dp(24)
+
+        canvas.before:
+            Color:
+                rgba: 0.03, 0.09, 0.15, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Label:
+            text: "Piatra - Foarfecă - Hârtie (camera)"
+            font_size: "36sp"
+            size_hint_y: 0.2
+
+        Label:
+            text: "Aici vei implementa jocul Piatra-Foarfecă-Hârtie folosind camera și recunoașterea gesturilor.\\n\\nLogica poate fi în modules/rps_camera_game.py, iar UI-ul îl poți personaliza după preferințe."
+            font_size: "20sp"
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+            size_hint_y: 0.6
+
+        Button:
+            text: "Înapoi"
+            font_size: "20sp"
+            size_hint_y: 0.2
+            on_press: app.go_home()
+

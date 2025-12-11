@@ -261,7 +261,7 @@ class KioskApp(App):
         content = BoxLayout(orientation="vertical", padding=16, spacing=12)
         msg = Label(
             text=f"{btn_text}\n\nRecomandare: {faculty}\n{reason}",
-            font_size="22sp",
+            font_size="26sp",
             bold=True,
             halign="center",
             valign="middle",
@@ -270,7 +270,9 @@ class KioskApp(App):
         ok_btn = Button(
             text=btn_text,
             size_hint_y=None,
-            height=52,
+            height=56,
+            font_size="20sp",
+            bold=True,
         )
         content.add_widget(msg)
         content.add_widget(ok_btn)

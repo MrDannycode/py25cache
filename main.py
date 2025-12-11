@@ -367,7 +367,10 @@ class KioskApp(App):
         
         if canvas:
             canvas.toggle_switch()
-            if canvas.bulb_lit or canvas.bulb2_lit:
+            # Nu afișa mesaje de felicitări dacă există explozie
+            if canvas.explosion_active:
+                self.circuit_status_text = "AI LUAT FOC! Conexiunile sunt greșite!"
+            elif canvas.bulb_lit or canvas.bulb2_lit:
                 self.circuit_status_text = "Circuit complet! Becul s-a aprins!"
             else:
                 self.circuit_status_text = "Conectează toate firele și pornește întrerupătoarele."
@@ -384,14 +387,27 @@ class KioskApp(App):
         
         if canvas:
             canvas.toggle_switch2()
-            if canvas.bulb_lit or canvas.bulb2_lit:
+            # Nu afișa mesaje de felicitări dacă există explozie
+            if canvas.explosion_active:
+                self.circuit_status_text = "AI LUAT FOC! Conexiunile sunt greșite!"
+            elif canvas.bulb_lit or canvas.bulb2_lit:
                 self.circuit_status_text = "Circuit complet! Becul s-a aprins!"
             else:
                 self.circuit_status_text = "Conectează toate firele și pornește întrerupătoarele."
 
     def on_circuit_complete(self):
         """Callback când circuitul este complet."""
-        self.circuit_status_text = "Felicitări! Circuitul funcționează perfect!"
+        # Verifică dacă nu există explozie înainte de a afișa mesajul de felicitări
+        canvas = None
+        if self.root:
+            try:
+                screen = self.root.get_screen("circuit")
+                canvas = screen.ids.get("circuit_canvas")
+            except Exception:
+                canvas = None
+        
+        if canvas and not canvas.explosion_active:
+            self.circuit_status_text = "Felicitări! Circuitul funcționează perfect!"
     
     def on_circuit_explosion(self):
         """Callback când circuitul are conexiuni greșite."""

@@ -16,6 +16,8 @@ from kivy.properties import BooleanProperty, ListProperty, StringProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
 
 from modules.personality_test import PersonalityTest
 from modules.scientist_matcher import ScientistMatcher

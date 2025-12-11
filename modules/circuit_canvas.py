@@ -34,20 +34,22 @@ class CircuitCanvas(Widget):
         comp_size = min(w, h) * 0.4
         
         # Poziții fixe, mutate foarte sus pentru display touch de 7 inchi
+        # Bateria rotită la 90 de grade, întrerupătorul puțin mai jos
         self.battery_pos = (w * 0.15, h * 0.9)
-        self.switch_pos = (w * 0.5, h * 0.9)
+        self.switch_pos = (w * 0.5, h * 0.85)  # Mutat mai jos pentru a evita suprapunerea
         self.bulb_pos = (w * 0.85, h * 0.9)
         self.comp_size = comp_size
         
         # Terminale mari pentru conexiuni (zone de touch mari)
+        # Bateria rotită la 90 de grade: terminal pozitiv sus, negativ jos
         terminal_size = comp_size * 0.3
         self.terminals = {
             "battery_positive": {
-                "pos": (self.battery_pos[0] + comp_size * 0.4, self.battery_pos[1]),
+                "pos": (self.battery_pos[0], self.battery_pos[1] + comp_size * 0.4),  # Sus
                 "size": terminal_size
             },
             "battery_negative": {
-                "pos": (self.battery_pos[0] - comp_size * 0.4, self.battery_pos[1]),
+                "pos": (self.battery_pos[0], self.battery_pos[1] - comp_size * 0.4),  # Jos
                 "size": terminal_size
             },
             "switch_in": {
@@ -121,62 +123,62 @@ class CircuitCanvas(Widget):
             self._draw_terminals()
 
     def _draw_battery(self):
-        """Desenează bateria cu imagini clare."""
+        """Desenează bateria rotită la 90 de grade (verticală)."""
         x, y = self.battery_pos
         size = self.comp_size
         
-        # Umbră
+        # Umbră (rotită vertical)
         Color(0, 0, 0, 0.3)
         Rectangle(
-            pos=(x - size * 0.45 + 5, y - size * 0.4 - 5),
-            size=(size * 0.9, size * 0.8)
+            pos=(x - size * 0.4 + 5, y - size * 0.45 - 5),
+            size=(size * 0.8, size * 0.9)
         )
         
-        # Corp baterie principal
+        # Corp baterie principal (vertical)
         Color(0.15, 0.55, 0.15, 1)
         Rectangle(
-            pos=(x - size * 0.45, y - size * 0.4),
-            size=(size * 0.9, size * 0.8)
+            pos=(x - size * 0.4, y - size * 0.45),
+            size=(size * 0.8, size * 0.9)
         )
         
-        # Banda verde deschis
+        # Banda verde deschis (orizontală acum, verticală în baterie rotită)
         Color(0.25, 0.7, 0.25, 1)
         Rectangle(
-            pos=(x - size * 0.45, y + size * 0.15),
-            size=(size * 0.9, size * 0.25)
+            pos=(x - size * 0.4, y + size * 0.15),
+            size=(size * 0.8, size * 0.25)
         )
         
-        # Liniile verticale (simbol baterie)
+        # Liniile orizontale (simbol baterie rotit) - acum verticale
         Color(0.1, 0.4, 0.1, 1)
         for i in range(3):
             Line(
                 points=[
-                    x - size * 0.3 + i * size * 0.3, y - size * 0.35,
-                    x - size * 0.3 + i * size * 0.3, y + size * 0.35
+                    x - size * 0.35, y - size * 0.3 + i * size * 0.3,
+                    x + size * 0.35, y - size * 0.3 + i * size * 0.3
                 ],
                 width=4
             )
         
-        # Terminal pozitiv (+) - mare și clar
+        # Terminal pozitiv (+) - sus (mare și clar)
         Color(0.9, 0.9, 0.9, 1)
         Rectangle(
-            pos=(x + size * 0.45, y - size * 0.1),
-            size=(size * 0.3, size * 0.2)
+            pos=(x - size * 0.1, y + size * 0.45),
+            size=(size * 0.2, size * 0.3)
         )
         # Simbol + mare
         Color(0.1, 0.1, 0.1, 1)
-        Line(points=[x + size * 0.6, y - size * 0.1, x + size * 0.6, y + size * 0.1], width=5)
-        Line(points=[x + size * 0.5, y, x + size * 0.7, y], width=5)
+        Line(points=[x - size * 0.1, y + size * 0.6, x + size * 0.1, y + size * 0.6], width=5)
+        Line(points=[x, y + size * 0.5, x, y + size * 0.7], width=5)
         
-        # Terminal negativ (-) - mare și clar
+        # Terminal negativ (-) - jos (mare și clar)
         Color(0.9, 0.9, 0.9, 1)
         Rectangle(
-            pos=(x - size * 0.75, y - size * 0.1),
-            size=(size * 0.3, size * 0.2)
+            pos=(x - size * 0.1, y - size * 0.75),
+            size=(size * 0.2, size * 0.3)
         )
         # Simbol - mare
         Color(0.1, 0.1, 0.1, 1)
-        Line(points=[x - size * 0.6, y, x - size * 0.45, y], width=5)
+        Line(points=[x - size * 0.1, y - size * 0.6, x + size * 0.1, y - size * 0.6], width=5)
 
     def _draw_switch(self):
         """Desenează întrerupătorul cu imagini clare."""

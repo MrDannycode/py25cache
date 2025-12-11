@@ -55,7 +55,18 @@ class MazeGame:
         raise RuntimeError("Player not found in maze template.")
 
     def render(self) -> str:
-        return "\n".join("".join(row) for row in self.grid)
+        """
+        Desenează labirintul în stil coridoare, fără # și puncte:
+        - pereți: bloc plin
+        - spații/traseu: spațiu
+        - P: icon om
+        - E: stea
+        """
+        display = {"#": "██", " ": "  ", self.trail_char: "  ", "P": "🙂", "E": "★"}
+        lines = []
+        for row in self.grid:
+            lines.append("".join(display.get(ch, "  ") for ch in row))
+        return "\n".join(lines)
 
     def move(self, direction: str) -> str:
         deltas = {
@@ -79,7 +90,7 @@ class MazeGame:
         if target == "#":
             return "block"
 
-        # move player, lasă o dâră pentru feedback vizual
+        # move player, lasă o dâră pentru feedback intern (randarea îl ascunde)
         self.grid[r][c] = self.trail_char
         self.grid[nr][nc] = "P"
         self.player_pos = (nr, nc)

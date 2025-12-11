@@ -15,6 +15,8 @@ ScreenManager:
         name: "scientist"
     RPSCameraGameScreen:
         name: "rps"
+    MazeGameScreen:
+        name: "maze"
 
 
 <HomeScreen>:
@@ -77,6 +79,15 @@ ScreenManager:
                 valign: "middle"
                 font_size: "20sp"
                 on_press: root.manager.current = "rps"
+                disabled: not app.person_present
+
+            Button:
+                text: "Labirint (touch)"
+                text_size: self.size
+                halign: "center"
+                valign: "middle"
+                font_size: "20sp"
+                on_press: root.manager.current = "maze"
                 disabled: not app.person_present
 
 
@@ -275,4 +286,80 @@ ScreenManager:
             font_size: "20sp"
             size_hint_y: 0.15
             on_press: app.go_home()
+
+
+<MazeGameScreen>:
+    BoxLayout:
+        orientation: "vertical"
+        padding: dp(24)
+        spacing: dp(24)
+
+        canvas.before:
+            Color:
+                rgba: 0.05, 0.12, 0.08, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Label:
+            text: "Labirint (touch)"
+            font_size: "36sp"
+            size_hint_y: 0.15
+
+        Label:
+            text: app.maze_status_text
+            font_size: "18sp"
+            size_hint_y: 0.1
+
+        Label:
+            text: app.maze_display_text
+            font_size: "20sp"
+            font_name: "data/fonts/RobotoMono-Regular.ttf" if False else None
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+            size_hint_y: 0.5
+
+        GridLayout:
+            cols: 3
+            spacing: dp(12)
+            size_hint_y: 0.2
+
+            Widget:
+            Button:
+                text: "↑"
+                font_size: "24sp"
+                on_press: app.move_maze("up")
+            Widget:
+
+            Button:
+                text: "←"
+                font_size: "24sp"
+                on_press: app.move_maze("left")
+            Widget:
+            Button:
+                text: "→"
+                font_size: "24sp"
+                on_press: app.move_maze("right")
+
+            Widget:
+            Button:
+                text: "↓"
+                font_size: "24sp"
+                on_press: app.move_maze("down")
+            Widget:
+
+        BoxLayout:
+            size_hint_y: 0.15
+            spacing: dp(16)
+
+            Button:
+                text: "Repornește"
+                font_size: "20sp"
+                on_press: app._reset_maze()
+
+            Button:
+                text: "Înapoi"
+                font_size: "20sp"
+                on_press: app.go_home()
 

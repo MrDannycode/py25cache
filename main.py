@@ -18,6 +18,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from modules.personality_test import PersonalityTest
 from modules.scientist_matcher import ScientistMatcher
 from modules.rps_camera_game import RPSCameraGame
+from modules.maze_game import MazeGame
 
 
 # --- Screen-uri de bază ---
@@ -47,6 +48,11 @@ class RPSCameraGameScreen(Screen):
     pass
 
 
+class MazeGameScreen(Screen):
+    """Ecran pentru jocul de labirint controlat prin touchscreen."""
+    pass
+
+
 class KioskApp(App):
     # True dacă a fost detectată o persoană în fața camerei
     person_present = BooleanProperty(False)
@@ -63,6 +69,10 @@ class KioskApp(App):
     # Proprietăți pentru RPS
     rps_status_text = StringProperty("Atinge «Joacă o rundă» și arată un gest către cameră.")
 
+    # Proprietăți pentru Labirint
+    maze_display_text = StringProperty("")
+    maze_status_text = StringProperty("Găsește ieșirea!")
+
     def build(self):
         self.title = "Universitate - Kiosk"
         kv_path = os.path.join(os.path.dirname(__file__), "kv", "main.kv")
@@ -71,7 +81,9 @@ class KioskApp(App):
         self.personality_engine = PersonalityTest()
         self.scientist_matcher = ScientistMatcher()
         self.rps_game = RPSCameraGame()
+        self.maze_game = MazeGame()
         self._reset_personality_test()
+        self._reset_maze()
         return Builder.load_file(kv_path)
 
     def on_start(self):
@@ -171,6 +183,22 @@ class KioskApp(App):
         ai = outcome.get("ai_move", "necunoscut")
         result = outcome.get("result", "egal")
         self.rps_status_text = f"Tu: {player} | AI: {ai} -> {result}"
+
+    # --- Labirint ---
+    def _reset_maze(self):
+        self.maze_game.reset()
+        self.maze_display_text = self.maze_game.render()
+        self.maze_status_text = "Găsește ieșirea!"
+
+    def move_maze(self, direction: str):
+        status = self.maze_game.move(direction)
+        self.maze_display_text = self.maze_game.render()
+        if status == "win":
+            self.maze_status_text = "Bravo! Ai găsit ieșirea. Apasă «Repornește»."
+        elif status == "block":
+            self.maze_status_text = "Perete! Încearcă altă direcție."
+        else:
+            self.maze_status_text = "Găsește ieșirea!"
 
     def on_stop(self):
         """Oprește detectorul (nefolosit acum) la ieșirea din aplicație."""

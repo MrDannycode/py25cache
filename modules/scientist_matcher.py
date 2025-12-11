@@ -1,10 +1,14 @@
 import os
 import random
 import time
+import subprocess
+import tempfile
 from dataclasses import dataclass
 from typing import List, Dict, Optional
+from datetime import datetime
 
 import cv2
+import numpy as np
 
 
 @dataclass
@@ -16,8 +20,8 @@ class Scientist:
 
 class ScientistMatcher:
     """
-    Captură un frame, detectează fața și întoarce un om de știință „asemănător”.
-    Pentru simplitate pe Raspberry Pi alegem un profil random dintr-o listă.
+    Captură un frame folosind rpicam-hello, detectează fața, adaugă cască de muncitor
+    și salvează poza editată.
     """
 
     def __init__(self, scientists: Optional[List[Scientist]] = None):
@@ -25,6 +29,9 @@ class ScientistMatcher:
         self.face_cascade = cv2.CascadeClassifier(
             cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
         )
+        # Director pentru pozele salvate
+        self.output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "output_photos")
+        os.makedirs(self.output_dir, exist_ok=True)
 
     def _default_scientists(self) -> List[Scientist]:
         return [
@@ -41,25 +48,129 @@ class ScientistMatcher:
         faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5)
         return faces
 
-    def _warm_capture(self, cap, attempts: int = 5, delay: float = 0.1):
-        """Încercă să citești câteva cadre pentru a încălzi camera."""
-        frame = None
-        for _ in range(attempts):
-            ret, frame = cap.read()
-            if ret and frame is not None:
-                return frame
-            time.sleep(delay)
+    def _create_helmet_mask(self, width: int, height: int) -> np.ndarray:
+        """Creează o mască pentru cască de muncitor (galbenă cu bandă reflectantă)."""
+        mask = np.zeros((height, width, 3), dtype=np.uint8)  # BGR
+        
+        # Casca principală (galben - BGR format)
+        cv2.ellipse(mask, (width // 2, height // 2), (width // 2, height // 2), 0, 0, 360, (0, 200, 255), -1)
+        
+        # Banda reflectantă (portocaliu)
+        cv2.ellipse(mask, (width // 2, height // 3), (width // 2, height // 6), 0, 0, 360, (0, 100, 255), -1)
+        
+        # Detalii (linii)
+        cv2.line(mask, (width // 4, height // 2), (3 * width // 4, height // 2), (0, 150, 255), 2)
+        
+        # Highlight pentru efect 3D
+        cv2.ellipse(mask, (width // 2, height // 3), (width // 3, height // 4), 0, 0, 180, (255, 255, 255), -1)
+        
+        return mask
+
+    def _add_helmet_to_face(self, frame: np.ndarray, face: tuple) -> np.ndarray:
+        """
+        Adaugă o cască de muncitor pe capul detectat.
+        face = (x, y, w, h) - coordonatele feței
+        """
+        x, y, w, h = face
+        frame_copy = frame.copy()
+        
+        # Dimensiuni pentru cască (mai mare decât fața)
+        helmet_width = int(w * 1.5)
+        helmet_height = int(h * 1.3)
+        
+        # Poziție cască (centrată pe față, puțin mai sus)
+        helmet_x = x - int((helmet_width - w) / 2)
+        helmet_y = y - int(h * 0.4)
+        
+        # Asigură-te că casca nu iese din cadru
+        helmet_x = max(0, min(helmet_x, frame.shape[1] - helmet_width))
+        helmet_y = max(0, min(helmet_y, frame.shape[0] - helmet_height))
+        
+        # Ajustează dimensiunile dacă ies din cadru
+        actual_width = min(helmet_width, frame.shape[1] - helmet_x)
+        actual_height = min(helmet_height, frame.shape[0] - helmet_y)
+        
+        # Creează casca
+        helmet_mask = self._create_helmet_mask(actual_width, actual_height)
+        
+        # Extrage regiunea unde va fi casca
+        roi = frame_copy[helmet_y:helmet_y + actual_height, helmet_x:helmet_x + actual_width]
+        
+        if roi.shape[0] > 0 and roi.shape[1] > 0 and helmet_mask.shape[0] > 0 and helmet_mask.shape[1] > 0:
+            # Aplică casca cu blending (70% casca, 30% imaginea originală)
+            alpha = 0.7
+            roi[:] = cv2.addWeighted(roi, 1 - alpha, helmet_mask, alpha, 0)
+        
+        return frame_copy
+
+    def _capture_frame_rpicam(self) -> Optional[np.ndarray]:
+        """
+        Capturează un frame folosind rpicam-hello --timeout 0.
+        Returnează imaginea ca numpy array (BGR pentru OpenCV).
+        """
+        # Creează un fișier temporar pentru imagine
+        temp_file = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+        temp_path = temp_file.name
+        temp_file.close()
+        
+        try:
+            # Rulează rpicam-hello pentru a captura o imagine
+            cmd = [
+                "rpicam-hello",
+                "--timeout", "0",
+                "--output", temp_path
+            ]
+            
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=15
+            )
+            
+            if result.returncode != 0:
+                raise RuntimeError(f"rpicam-hello a eșuat: {result.stderr}")
+            
+            # Citește imaginea capturată
+            frame = cv2.imread(temp_path)
+            if frame is None:
+                raise RuntimeError("Nu am putut citi imaginea capturată.")
+            
+            return frame
+            
+        finally:
+            # Șterge fișierul temporar
+            if os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
+
+    def _warm_capture(self, attempts: int = 2, delay: float = 0.5):
+        """Face mai multe încercări de captură pentru a se asigura că primește un frame valid."""
+        for attempt in range(attempts):
+            try:
+                frame = self._capture_frame_rpicam()
+                if frame is not None and frame.size > 0:
+                    return frame
+            except subprocess.TimeoutExpired:
+                if attempt == attempts - 1:
+                    raise RuntimeError("Timeout la capturarea imaginii. Verifică dacă camera funcționează.")
+                time.sleep(delay)
+            except Exception as e:
+                if attempt == attempts - 1:
+                    raise
+                time.sleep(delay)
         return None
 
     def capture_and_match(self, camera_index: int = 0) -> Optional[Dict]:
-        cap = cv2.VideoCapture(camera_index)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        if not cap.isOpened():
-            raise RuntimeError(f"Nu pot deschide camera {camera_index}")
-
+        """
+        Capturează o imagine folosind rpicam-hello, detectează fața, adaugă cască
+        și salvează poza editată.
+        """
         try:
-            frame = self._warm_capture(cap)
+            # Capturează frame folosind rpicam-hello
+            frame = self._warm_capture()
             if frame is None:
                 raise RuntimeError("Nu am putut citi un frame de la cameră.")
 
@@ -67,16 +178,34 @@ class ScientistMatcher:
             if len(faces) == 0:
                 return None
 
-            # Alege un om de știință random (în loc de heavy ML)
+            # Adaugă casca pe prima față detectată
+            edited_frame = frame.copy()
+            if len(faces) > 0:
+                # Folosește cea mai mare față detectată
+                largest_face = max(faces, key=lambda f: f[2] * f[3])
+                edited_frame = self._add_helmet_to_face(edited_frame, largest_face)
+
+            # Salvează poza editată
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"scientist_photo_{timestamp}.jpg"
+            output_path = os.path.join(self.output_dir, filename)
+            cv2.imwrite(output_path, edited_frame)
+
+            # Alege un om de știință random
             scientist = random.choice(self.scientists)
             return {
                 "name": scientist.name,
                 "description": scientist.description,
                 "image_path": scientist.image_path,
                 "faces_detected": len(faces),
+                "edited_photo_path": output_path,
             }
-        finally:
-            cap.release()
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Eroare la rularea rpicam-hello: {e}")
+        except FileNotFoundError:
+            raise RuntimeError("rpicam-hello nu este instalat sau nu este în PATH.")
+        except Exception as e:
+            raise RuntimeError(f"Eroare cameră: {e}")
 
 
 if __name__ == "__main__":

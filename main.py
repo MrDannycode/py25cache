@@ -76,6 +76,7 @@ class KioskApp(App):
 
     # Proprietăți pentru scientist matcher
     scientist_status_text = StringProperty("Atinge butonul pentru a face o poză și a găsi un om de știință.")
+    scientist_photo_path = StringProperty("")
 
     # Proprietăți pentru RPS
     rps_status_text = StringProperty("Atinge «Joacă o rundă» și arată un gest către cameră.")
@@ -174,6 +175,7 @@ class KioskApp(App):
     # --- Scientist matcher ---
     def capture_scientist_match(self):
         self.scientist_status_text = "Capturez... te rog stai nemișcat(ă)."
+        self.scientist_photo_path = ""
         try:
             match = self.scientist_matcher.capture_and_match(camera_index=self.camera_index)
         except Exception as exc:
@@ -186,7 +188,23 @@ class KioskApp(App):
 
         name = match.get("name", "Om de știință misterios")
         desc = match.get("description", "")
-        self.scientist_status_text = f"Semeni cu {name}!\\n{desc}"
+        photo_path = match.get("edited_photo_path", "")
+        
+        self.scientist_photo_path = photo_path
+        self.scientist_status_text = f"Semeni cu {name}!\\n{desc}\\n\\nPoza ta cu casca este gata! Poți o descărca mai jos."
+
+    def download_scientist_photo(self):
+        """Deschide poza în aplicația default sau copiază în clipboard."""
+        if not self.scientist_photo_path or not os.path.exists(self.scientist_photo_path):
+            self.scientist_status_text = "Nu există poză de descărcat. Fă mai întâi o poză."
+            return
+        
+        try:
+            # Deschide poza cu aplicația default
+            webbrowser.open(f"file://{os.path.abspath(self.scientist_photo_path)}")
+            self.scientist_status_text = f"Poza a fost deschisă!\\nCalea: {self.scientist_photo_path}"
+        except Exception as exc:
+            self.scientist_status_text = f"Eroare la deschiderea pozei: {exc}"
 
     # --- RPS ---
     def play_rps_round(self):

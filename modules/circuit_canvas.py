@@ -10,7 +10,7 @@ from kivy.app import App
 class CircuitCanvas(Widget):
     """
     Canvas simplu și intuitiv pentru touchscreen: baterie, întrerupător, bec.
-    Componente mari, poziționate bine, ușor de atins.
+    Componente mari, poziționate bine, ușor de atins cu imagini clare.
     """
 
     def __init__(self, **kwargs):
@@ -31,39 +31,39 @@ class CircuitCanvas(Widget):
         
         w, h = self.width, self.height
         # Componente mult mai mari pentru touchscreen
-        comp_size = min(w, h) * 0.35
+        comp_size = min(w, h) * 0.4
         
         # Poziții fixe, centrate vertical, mai sus
-        self.battery_pos = (w * 0.15, h * 0.6)
-        self.switch_pos = (w * 0.5, h * 0.6)
-        self.bulb_pos = (w * 0.85, h * 0.6)
+        self.battery_pos = (w * 0.15, h * 0.65)
+        self.switch_pos = (w * 0.5, h * 0.65)
+        self.bulb_pos = (w * 0.85, h * 0.65)
         self.comp_size = comp_size
         
         # Terminale mari pentru conexiuni (zone de touch mari)
-        terminal_size = comp_size * 0.25
+        terminal_size = comp_size * 0.3
         self.terminals = {
             "battery_positive": {
-                "pos": (self.battery_pos[0] + comp_size * 0.35, self.battery_pos[1]),
+                "pos": (self.battery_pos[0] + comp_size * 0.4, self.battery_pos[1]),
                 "size": terminal_size
             },
             "battery_negative": {
-                "pos": (self.battery_pos[0] - comp_size * 0.35, self.battery_pos[1]),
+                "pos": (self.battery_pos[0] - comp_size * 0.4, self.battery_pos[1]),
                 "size": terminal_size
             },
             "switch_in": {
-                "pos": (self.switch_pos[0] - comp_size * 0.35, self.switch_pos[1]),
+                "pos": (self.switch_pos[0] - comp_size * 0.4, self.switch_pos[1]),
                 "size": terminal_size
             },
             "switch_out": {
-                "pos": (self.switch_pos[0] + comp_size * 0.35, self.switch_pos[1]),
+                "pos": (self.switch_pos[0] + comp_size * 0.4, self.switch_pos[1]),
                 "size": terminal_size
             },
             "bulb_positive": {
-                "pos": (self.bulb_pos[0] - comp_size * 0.35, self.bulb_pos[1] + comp_size * 0.25),
+                "pos": (self.bulb_pos[0] - comp_size * 0.4, self.bulb_pos[1] + comp_size * 0.3),
                 "size": terminal_size
             },
             "bulb_negative": {
-                "pos": (self.bulb_pos[0] - comp_size * 0.35, self.bulb_pos[1] - comp_size * 0.25),
+                "pos": (self.bulb_pos[0] - comp_size * 0.4, self.bulb_pos[1] - comp_size * 0.3),
                 "size": terminal_size
             },
         }
@@ -122,197 +122,228 @@ class CircuitCanvas(Widget):
             self._draw_terminals()
 
     def _draw_battery(self):
-        """Desenează bateria."""
+        """Desenează bateria cu imagini clare."""
         x, y = self.battery_pos
         size = self.comp_size
         
         # Umbră
-        Color(0, 0, 0, 0.25)
+        Color(0, 0, 0, 0.3)
         Rectangle(
-            pos=(x - size * 0.4 + 4, y - size * 0.35 - 4),
-            size=(size * 0.8, size * 0.7)
+            pos=(x - size * 0.45 + 5, y - size * 0.4 - 5),
+            size=(size * 0.9, size * 0.8)
         )
         
-        # Corp baterie
-        Color(0.2, 0.6, 0.2, 1)
+        # Corp baterie principal
+        Color(0.15, 0.55, 0.15, 1)
         Rectangle(
-            pos=(x - size * 0.4, y - size * 0.35),
-            size=(size * 0.8, size * 0.7)
+            pos=(x - size * 0.45, y - size * 0.4),
+            size=(size * 0.9, size * 0.8)
         )
         
-        # Highlight
-        Color(0.3, 0.7, 0.3, 1)
+        # Banda verde deschis
+        Color(0.25, 0.7, 0.25, 1)
         Rectangle(
-            pos=(x - size * 0.4, y + size * 0.1),
-            size=(size * 0.8, size * 0.25)
+            pos=(x - size * 0.45, y + size * 0.15),
+            size=(size * 0.9, size * 0.25)
         )
         
-        # Terminal pozitiv (+)
-        Color(0.95, 0.95, 0.95, 1)
+        # Liniile verticale (simbol baterie)
+        Color(0.1, 0.4, 0.1, 1)
+        for i in range(3):
+            Line(
+                points=[
+                    x - size * 0.3 + i * size * 0.3, y - size * 0.35,
+                    x - size * 0.3 + i * size * 0.3, y + size * 0.35
+                ],
+                width=4
+            )
+        
+        # Terminal pozitiv (+) - mare și clar
+        Color(0.9, 0.9, 0.9, 1)
         Rectangle(
-            pos=(x + size * 0.4, y - size * 0.08),
-            size=(size * 0.25, size * 0.16)
+            pos=(x + size * 0.45, y - size * 0.1),
+            size=(size * 0.3, size * 0.2)
         )
-        # Simbol +
+        # Simbol + mare
         Color(0.1, 0.1, 0.1, 1)
-        Line(points=[x + size * 0.525, y - size * 0.08, x + size * 0.525, y + size * 0.08], width=3)
-        Line(points=[x + size * 0.45, y, x + size * 0.6, y], width=3)
+        Line(points=[x + size * 0.6, y - size * 0.1, x + size * 0.6, y + size * 0.1], width=5)
+        Line(points=[x + size * 0.5, y, x + size * 0.7, y], width=5)
         
-        # Terminal negativ (-)
-        Color(0.95, 0.95, 0.95, 1)
+        # Terminal negativ (-) - mare și clar
+        Color(0.9, 0.9, 0.9, 1)
         Rectangle(
-            pos=(x - size * 0.65, y - size * 0.08),
-            size=(size * 0.25, size * 0.16)
+            pos=(x - size * 0.75, y - size * 0.1),
+            size=(size * 0.3, size * 0.2)
         )
-        # Simbol -
+        # Simbol - mare
         Color(0.1, 0.1, 0.1, 1)
-        Line(points=[x - size * 0.55, y, x - size * 0.4, y], width=3)
+        Line(points=[x - size * 0.6, y, x - size * 0.45, y], width=5)
 
     def _draw_switch(self):
-        """Desenează întrerupătorul."""
+        """Desenează întrerupătorul cu imagini clare."""
         x, y = self.switch_pos
         size = self.comp_size
         
         # Umbră
-        Color(0, 0, 0, 0.25)
+        Color(0, 0, 0, 0.3)
         Rectangle(
-            pos=(x - size * 0.35 + 3, y - size * 0.2 - 3),
-            size=(size * 0.7, size * 0.4)
+            pos=(x - size * 0.4 + 4, y - size * 0.25 - 4),
+            size=(size * 0.8, size * 0.5)
         )
         
         # Bază întrerupător
-        Color(0.35, 0.35, 0.35, 1)
+        Color(0.3, 0.3, 0.3, 1)
         Rectangle(
-            pos=(x - size * 0.35, y - size * 0.2),
-            size=(size * 0.7, size * 0.4)
+            pos=(x - size * 0.4, y - size * 0.25),
+            size=(size * 0.8, size * 0.5)
         )
         
         # Highlight
-        Color(0.45, 0.45, 0.45, 1)
+        Color(0.4, 0.4, 0.4, 1)
         Rectangle(
-            pos=(x - size * 0.35, y + size * 0.1),
-            size=(size * 0.7, size * 0.1)
+            pos=(x - size * 0.4, y + size * 0.15),
+            size=(size * 0.8, size * 0.1)
         )
         
-        # Pârghie
+        # Pârghie mare și clară
         if self.switch_on:
-            Color(0.15, 0.85, 0.15, 1)  # Verde când e ON
+            Color(0.1, 0.9, 0.1, 1)  # Verde strălucitor când e ON
+            # Pârghie în poziție ON (înclinată sus)
             Line(
                 points=[
-                    x - size * 0.25, y,
-                    x + size * 0.25, y + size * 0.2
+                    x - size * 0.3, y,
+                    x + size * 0.3, y + size * 0.25
                 ],
-                width=8
+                width=10
+            )
+            # Indicător ON
+            Color(0.1, 0.9, 0.1, 0.5)
+            Ellipse(
+                pos=(x - size * 0.15, y - size * 0.15),
+                size=(size * 0.3, size * 0.3)
             )
         else:
-            Color(0.85, 0.15, 0.15, 1)  # Roșu când e OFF
+            Color(0.9, 0.1, 0.1, 1)  # Roșu strălucitor când e OFF
+            # Pârghie în poziție OFF (înclinată jos)
             Line(
                 points=[
-                    x - size * 0.25, y,
-                    x - size * 0.25, y - size * 0.2
+                    x - size * 0.3, y,
+                    x - size * 0.3, y - size * 0.25
                 ],
-                width=8
+                width=10
+            )
+            # Indicător OFF
+            Color(0.9, 0.1, 0.1, 0.5)
+            Ellipse(
+                pos=(x - size * 0.15, y - size * 0.15),
+                size=(size * 0.3, size * 0.3)
             )
         
-        # Terminale (cercuri mari)
-        Color(0.25, 0.25, 0.25, 1)
+        # Terminale (cercuri mari și clare)
+        Color(0.2, 0.2, 0.2, 1)
         Ellipse(
-            pos=(x - size * 0.35 - size * 0.12, y - size * 0.12),
-            size=(size * 0.24, size * 0.24)
+            pos=(x - size * 0.4 - size * 0.15, y - size * 0.15),
+            size=(size * 0.3, size * 0.3)
         )
         Ellipse(
-            pos=(x + size * 0.35 - size * 0.12, y - size * 0.12),
-            size=(size * 0.24, size * 0.24)
+            pos=(x + size * 0.4 - size * 0.15, y - size * 0.15),
+            size=(size * 0.3, size * 0.3)
         )
 
     def _draw_bulb(self):
-        """Desenează becul."""
+        """Desenează becul cu imagini clare."""
         x, y = self.bulb_pos
         size = self.comp_size
         
         if self.bulb_lit:
-            # Glow când e aprins (straturi multiple)
-            for i in range(5):
-                alpha = 0.6 - (i * 0.12)
-                Color(1.0, 0.9, 0.2, alpha)
+            # Glow când e aprins (straturi multiple, mai strălucitor)
+            for i in range(6):
+                alpha = 0.7 - (i * 0.12)
+                Color(1.0, 0.95, 0.3, alpha)
                 Ellipse(
-                    pos=(x - size * 0.5 - i * size * 0.1, y - size * 0.5 - i * size * 0.1),
-                    size=(size + i * size * 0.2, size + i * size * 0.2)
+                    pos=(x - size * 0.5 - i * size * 0.12, y - size * 0.5 - i * size * 0.12),
+                    size=(size + i * size * 0.24, size + i * size * 0.24)
                 )
-            Color(1.0, 0.95, 0.3, 1)
+            Color(1.0, 0.98, 0.4, 1)
         else:
-            Color(0.7, 0.7, 0.7, 1)
+            Color(0.65, 0.65, 0.65, 1)
         
         # Umbră
-        Color(0, 0, 0, 0.2)
+        Color(0, 0, 0, 0.25)
         Ellipse(
-            pos=(x - size * 0.5 + 3, y - size * 0.5 - 3),
+            pos=(x - size * 0.5 + 4, y - size * 0.5 - 4),
             size=(size, size)
         )
         
-        # Corp bec (bulb)
-        Color(1.0, 0.95, 0.3, 1) if self.bulb_lit else Color(0.7, 0.7, 0.7, 1)
+        # Corp bec (bulb) - mare și clar
+        Color(1.0, 0.98, 0.4, 1) if self.bulb_lit else Color(0.65, 0.65, 0.65, 1)
         Ellipse(
             pos=(x - size * 0.5, y - size * 0.5),
             size=(size, size)
         )
         
         # Highlight pe bec
-        Color(1, 1, 1, 0.5)
+        Color(1, 1, 1, 0.6)
         Ellipse(
-            pos=(x - size * 0.3, y + size * 0.15),
-            size=(size * 0.6, size * 0.5)
+            pos=(x - size * 0.3, y + size * 0.2),
+            size=(size * 0.6, size * 0.6)
         )
         
-        # Filament interior
+        # Filament interior - mare și clar
         if self.bulb_lit:
-            Color(1.0, 1.0, 0.7, 1)
+            Color(1.0, 1.0, 0.8, 1)
         else:
-            Color(0.25, 0.25, 0.25, 1)
+            Color(0.2, 0.2, 0.2, 1)
         
-        # Filament simplu (linie în zigzag)
+        # Filament simplu (linie în zigzag) - mai gros
         filament_points = [
-            x - size * 0.25, y + size * 0.15,
-            x, y - size * 0.15,
-            x + size * 0.25, y + size * 0.1
+            x - size * 0.3, y + size * 0.2,
+            x, y - size * 0.2,
+            x + size * 0.3, y + size * 0.15
         ]
-        Line(points=filament_points, width=4)
+        Line(points=filament_points, width=6)
         
-        # Baza becului
-        Color(0.2, 0.2, 0.2, 1)
-        Rectangle(
-            pos=(x - size * 0.35, y - size * 0.7),
-            size=(size * 0.7, size * 0.25)
-        )
-        
-        # Terminale (cercuri mari)
+        # Baza becului - mare și clară
         Color(0.15, 0.15, 0.15, 1)
+        Rectangle(
+            pos=(x - size * 0.4, y - size * 0.75),
+            size=(size * 0.8, size * 0.3)
+        )
+        
+        # Terminale (cercuri mari și clare)
+        Color(0.1, 0.1, 0.1, 1)
         Ellipse(
-            pos=(x - size * 0.35 - size * 0.12, y + size * 0.25 - size * 0.12),
-            size=(size * 0.24, size * 0.24)
+            pos=(x - size * 0.4 - size * 0.15, y + size * 0.3 - size * 0.15),
+            size=(size * 0.3, size * 0.3)
         )
         Ellipse(
-            pos=(x - size * 0.35 - size * 0.12, y - size * 0.25 - size * 0.12),
-            size=(size * 0.24, size * 0.24)
+            pos=(x - size * 0.4 - size * 0.15, y - size * 0.3 - size * 0.15),
+            size=(size * 0.3, size * 0.3)
         )
 
     def _draw_terminals(self):
-        """Desenează terminalele ca zone de touch vizibile."""
+        """Desenează terminalele ca zone de touch vizibile și clare."""
         for term_name, term_info in self.terminals.items():
             pos = term_info["pos"]
             size = term_info["size"]
             
-            # Cerc pentru terminal (zone de touch)
-            Color(0.05, 0.78, 1, 0.4)  # Albastru neon transparent
+            # Cerc pentru terminal (zone de touch) - mai vizibil
+            Color(0.05, 0.78, 1, 0.5)  # Albastru neon transparent
             Ellipse(
                 pos=(pos[0] - size * 0.5, pos[1] - size * 0.5),
                 size=(size, size)
             )
-            # Contur
+            # Contur groasă
             Color(0.05, 0.78, 1, 1)  # Albastru neon
             Line(
                 ellipse=(pos[0] - size * 0.5, pos[1] - size * 0.5, size, size),
-                width=3
+                width=5
+            )
+            # Centru indicător
+            Color(1, 1, 1, 0.8)
+            Ellipse(
+                pos=(pos[0] - size * 0.15, pos[1] - size * 0.15),
+                size=(size * 0.3, size * 0.3)
             )
 
     def _draw_wire(self, start_terminal: str, end_terminal: str):
@@ -326,13 +357,13 @@ class CircuitCanvas(Widget):
         start_pos = start_info["pos"]
         end_pos = end_info["pos"]
         
-        # Fir (linie groasă)
-        Color(0.1, 0.1, 0.1, 1)
-        Line(points=[start_pos[0], start_pos[1], end_pos[0], end_pos[1]], width=8)
+        # Fir (linie foarte groasă pentru claritate)
+        Color(0.05, 0.05, 0.05, 1)
+        Line(points=[start_pos[0], start_pos[1], end_pos[0], end_pos[1]], width=12)
         
         # Highlight pe fir
-        Color(0.3, 0.3, 0.3, 0.6)
-        Line(points=[start_pos[0], start_pos[1], end_pos[0], end_pos[1]], width=4)
+        Color(0.3, 0.3, 0.3, 0.7)
+        Line(points=[start_pos[0], start_pos[1], end_pos[0], end_pos[1]], width=6)
 
     def on_touch_down(self, touch):
         """Începe trasarea unui fir."""
@@ -344,8 +375,8 @@ class CircuitCanvas(Widget):
             self._start_terminal = terminal
             self._touch_start = touch.pos
             with self.canvas.after:
-                Color(0.2, 0.2, 0.2, 1)
-                self._current_line = Line(points=[touch.x, touch.y], width=8)
+                Color(0.1, 0.1, 0.1, 1)
+                self._current_line = Line(points=[touch.x, touch.y], width=12)
         return True
 
     def on_touch_move(self, touch):
@@ -381,7 +412,7 @@ class CircuitCanvas(Widget):
         return super().on_touch_up(touch)
 
     def _terminal_at(self, pos: Tuple[float, float]) -> Optional[str]:
-        """Găsește terminalul cel mai apropiat de poziție (zona de touch mare)."""
+        """Găsește terminalul cel mai apropiat de poziție (zona de touch foarte mare)."""
         x, y = pos
         min_dist = float('inf')
         nearest = None
@@ -391,7 +422,7 @@ class CircuitCanvas(Widget):
             term_size = term_info["size"]
             dist = math.sqrt((x - term_pos[0])**2 + (y - term_pos[1])**2)
             # Zonă de captură foarte mare pentru touchscreen
-            if dist < term_size * 0.8 and dist < min_dist:
+            if dist < term_size * 1.0 and dist < min_dist:
                 min_dist = dist
                 nearest = term_name
         

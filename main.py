@@ -66,6 +66,8 @@ class KioskApp(App):
     def build(self):
         self.title = "Universitate - Kiosk"
         kv_path = os.path.join(os.path.dirname(__file__), "kv", "main.kv")
+        # Permite schimbarea camerei din variabilă de mediu (ex: CAMERA_INDEX=1)
+        self.camera_index = int(os.environ.get("CAMERA_INDEX", "0"))
         self.personality_engine = PersonalityTest()
         self.scientist_matcher = ScientistMatcher()
         self.rps_game = RPSCameraGame()
@@ -143,7 +145,7 @@ class KioskApp(App):
     def capture_scientist_match(self):
         self.scientist_status_text = "Capturez... te rog stai nemișcat(ă)."
         try:
-            match = self.scientist_matcher.capture_and_match(camera_index=0)
+            match = self.scientist_matcher.capture_and_match(camera_index=self.camera_index)
         except Exception as exc:
             self.scientist_status_text = f"Eroare cameră: {exc}"
             return
@@ -160,7 +162,7 @@ class KioskApp(App):
     def play_rps_round(self):
         self.rps_status_text = "Capturez gestul... 3, 2, 1!"
         try:
-            outcome = self.rps_game.play_round(camera_index=0)
+            outcome = self.rps_game.play_round(camera_index=self.camera_index)
         except Exception as exc:
             self.rps_status_text = f"Eroare cameră: {exc}"
             return

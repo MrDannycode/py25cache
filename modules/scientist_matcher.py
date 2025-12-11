@@ -1,5 +1,6 @@
 import os
 import random
+import time
 from dataclasses import dataclass
 from typing import List, Dict, Optional
 
@@ -40,14 +41,26 @@ class ScientistMatcher:
         faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5)
         return faces
 
+    def _warm_capture(self, cap, attempts: int = 5, delay: float = 0.1):
+        """Încercă să citești câteva cadre pentru a încălzi camera."""
+        frame = None
+        for _ in range(attempts):
+            ret, frame = cap.read()
+            if ret and frame is not None:
+                return frame
+            time.sleep(delay)
+        return None
+
     def capture_and_match(self, camera_index: int = 0) -> Optional[Dict]:
         cap = cv2.VideoCapture(camera_index)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         if not cap.isOpened():
             raise RuntimeError(f"Nu pot deschide camera {camera_index}")
 
         try:
-            ret, frame = cap.read()
-            if not ret or frame is None:
+            frame = self._warm_capture(cap)
+            if frame is None:
                 raise RuntimeError("Nu am putut citi un frame de la cameră.")
 
             faces = self._detect_face(frame)

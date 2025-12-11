@@ -1,4 +1,5 @@
 import random
+import time
 from typing import Dict
 
 import cv2
@@ -60,14 +61,25 @@ class RPSCameraGame:
             return "foarfecă"
         return "piatră"
 
+    def _warm_capture(self, cap, attempts: int = 5, delay: float = 0.1):
+        frame = None
+        for _ in range(attempts):
+            ret, frame = cap.read()
+            if ret and frame is not None:
+                return frame
+            time.sleep(delay)
+        return None
+
     def play_round(self, camera_index: int = 0) -> Dict:
         cap = cv2.VideoCapture(camera_index)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         if not cap.isOpened():
             raise RuntimeError(f"Nu pot deschide camera {camera_index}")
 
         try:
-            ret, frame = cap.read()
-            if not ret or frame is None:
+            frame = self._warm_capture(cap)
+            if frame is None:
                 raise RuntimeError("Nu am putut citi un frame de la cameră.")
 
             player_move = self._detect_move(frame)

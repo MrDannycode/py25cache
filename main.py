@@ -73,45 +73,18 @@ class KioskApp(App):
         return Builder.load_file(kv_path)
 
     def on_start(self):
-        """Pornește detectorul de prezență (dacă modulul există)."""
-        self._setup_presence_detector()
+        """
+        Pornește aplicația în mod kiosk fără detectare de mișcare.
+        Setăm person_present=True ca să nu blocăm butoanele.
+        """
+        self.person_present = True
 
+    # Detectorul este dezactivat; metodele rămân ca no-op pentru compatibilitate
     def _setup_presence_detector(self):
-        """Inițializează și pornește detectorul de prezență."""
-        try:
-            from modules.presence_detector import PresenceDetector
-        except ImportError:
-            # Aplicația merge și fără detector, dar nu va bloca butoanele.
-            print(
-                "[KIOSK] AVERTISMENT: modules/presence_detector.py nu a fost găsit.\n"
-                "         Prezența nu va fi detectată automat."
-            )
-            self.presence_detector = None
-            # Pentru teste fără detector: self.person_present = True
-            return
-
-        self.presence_detector = PresenceDetector(camera_index=0)
-
-        try:
-            self.presence_detector.start()
-        except Exception as exc:
-            print(f"[KIOSK] Eroare la pornirea PresenceDetector: {exc}")
-            self.presence_detector = None
-            return
-
-        # Interoghează periodic detectorul
-        Clock.schedule_interval(self._update_presence, 0.5)
+        self.presence_detector = None
 
     def _update_presence(self, dt):
-        """Actualizează proprietatea person_present pe baza detectorului."""
-        if not getattr(self, "presence_detector", None):
-            return
-
-        try:
-            present = self.presence_detector.is_person_present()
-            self.person_present = bool(present)
-        except Exception as exc:
-            print(f"[KIOSK] Eroare în is_person_present(): {exc}")
+        return
 
     # --- Info screen ---
     def open_university_website(self):
@@ -198,7 +171,7 @@ class KioskApp(App):
         self.rps_status_text = f"Tu: {player} | AI: {ai} -> {result}"
 
     def on_stop(self):
-        """Oprește detectorul de prezență la ieșirea din aplicație."""
+        """Oprește detectorul (nefolosit acum) la ieșirea din aplicație."""
         detector = getattr(self, "presence_detector", None)
         if detector is not None:
             try:

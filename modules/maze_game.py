@@ -63,7 +63,7 @@ class MazeGame:
         - E: stea
         """
         display = {
-            "#": "──",  # perete ca linie continuă
+            "#": "┃┃",  # perete ca linie continuă vizual (vertical gros)
             " ": "  ",  # coridor liber
             self.trail_char: "  ",  # traseu ascuns vizual
             "P": "[color=#4CAF50]🙂[/color]",  # jucător verde

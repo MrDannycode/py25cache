@@ -80,6 +80,7 @@ class KioskApp(App):
 
     # Proprietăți pentru RPS
     rps_status_text = StringProperty("Atinge «Joacă o rundă» și arată un gest către cameră.")
+    rps_timer_text = StringProperty("")
 
     # Proprietăți pentru Labirint
     maze_display_text = StringProperty("")
@@ -208,17 +209,51 @@ class KioskApp(App):
 
     # --- RPS ---
     def play_rps_round(self):
-        self.rps_status_text = "Capturez gestul... 3, 2, 1!"
+        """Joacă o rundă cu timer de 3 secunde și mesaje personalizate."""
+        self.rps_status_text = "Pregătește-te! Timer-ul începe..."
+        self.rps_timer_text = "3"
+        
+        # Timer de 3 secunde cu countdown
+        def update_timer(dt):
+            timer_value = int(self.rps_timer_text)
+            if timer_value > 1:
+                self.rps_timer_text = str(timer_value - 1)
+                self.rps_status_text = f"Pregătește-te! {timer_value - 1}..."
+            else:
+                self.rps_timer_text = "0"
+                self.rps_status_text = "Capturez gestul... Arată semnul!"
+                Clock.schedule_once(self._capture_rps_move, 0.5)
+        
+        # Anulează orice timer anterior
+        if hasattr(self, '_rps_timer'):
+            self._rps_timer.cancel()
+        
+        # Pornește timer-ul
+        self._rps_timer = Clock.schedule_interval(update_timer, 1.0)
+        Clock.schedule_once(lambda dt: self._rps_timer.cancel(), 3.5)
+    
+    def _capture_rps_move(self, dt):
+        """Capturează mutarea după timer."""
         try:
             outcome = self.rps_game.play_round(camera_index=self.camera_index)
         except Exception as exc:
             self.rps_status_text = f"Eroare cameră: {exc}"
+            self.rps_timer_text = ""
             return
 
         player = outcome.get("player_move", "necunoscut")
         ai = outcome.get("ai_move", "necunoscut")
         result = outcome.get("result", "egal")
-        self.rps_status_text = f"Tu: {player} | AI: {ai} -> {result}"
+        
+        # Mesaje personalizate
+        if result == "player_wins":
+            self.rps_status_text = f"Felicitări, ești mai bun decât un Intel i5!\\n\\nTu: {player} | AI: {ai}"
+        elif result == "ai_wins":
+            self.rps_status_text = f"Haha, până și un Pentium e mai bun ca tine!\\n\\nTu: {player} | AI: {ai}"
+        else:
+            self.rps_status_text = f"Egal!\\n\\nTu: {player} | AI: {ai}"
+        
+        self.rps_timer_text = ""
 
     # --- Labirint ---
     def _reset_maze(self):

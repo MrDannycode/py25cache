@@ -11,8 +11,10 @@ import numpy as np
 
 class RPSCameraGame:
     """
-    Joc piatră-foarfecă-hârtie folosind conturul mâinii.
-    Folosește rpicam-hello pentru capturarea imaginilor.
+    Joc piatră-foarfecă-hârtie folosind recunoașterea semnelor:
+    - Piatra = pumn închis
+    - Foarfecă = două degete ridicate
+    - Hârtie = palmă ridicată
     """
 
     MOVES = ["piatră", "foarfecă", "hârtie"]
@@ -60,9 +62,12 @@ class RPSCameraGame:
                 except:
                     pass
 
-    def _detect_move(self, frame) -> str:
-        """Detectează mutarea jucătorului din frame."""
-        # Focus pe centrul imaginii pentru a evita zgomot de fundal
+    def _count_fingers(self, frame) -> int:
+        """
+        Numără degetele ridicate din mână.
+        Returnează numărul de degete detectate.
+        """
+        # Focus pe centrul imaginii
         h, w, _ = frame.shape
         cx, cy = w // 2, h // 2
         size = min(h, w) // 2
@@ -75,15 +80,15 @@ class RPSCameraGame:
 
         contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         if not contours:
-            return random.choice(self.MOVES)
+            return 0
 
         max_contour = max(contours, key=cv2.contourArea)
         if cv2.contourArea(max_contour) < 1000:
-            return random.choice(self.MOVES)
+            return 0
 
         hull = cv2.convexHull(max_contour, returnPoints=False)
         if hull is None or len(hull) < 3:
-            return random.choice(self.MOVES)
+            return 0
 
         defects = cv2.convexityDefects(max_contour, hull)
         finger_count = 0
@@ -96,16 +101,31 @@ class RPSCameraGame:
                 a = np.linalg.norm(np.array(end) - np.array(start))
                 b = np.linalg.norm(np.array(far) - np.array(start))
                 c = np.linalg.norm(np.array(end) - np.array(far))
-                # Cosinus legea cosinusului
                 angle = np.arccos((b ** 2 + c ** 2 - a ** 2) / (2 * b * c + 1e-6))
                 if angle <= np.pi / 2 and d > 1000:
                     finger_count += 1
 
-        if finger_count >= 3:
-            return "hârtie"
-        if finger_count == 1 or finger_count == 2:
+        # Numărul de degete = finger_count + 1 (degetul mare nu e detectat de convexity defects)
+        return finger_count + 1
+
+    def _detect_move(self, frame) -> str:
+        """
+        Detectează mutarea jucătorului:
+        - Piatra = pumn închis (0-1 degete)
+        - Foarfecă = două degete ridicate (2 degete)
+        - Hârtie = palmă ridicată (4-5 degete)
+        """
+        finger_count = self._count_fingers(frame)
+        
+        if finger_count <= 1:
+            return "piatră"  # Pumn închis
+        elif finger_count == 2:
+            return "foarfecă"  # Două degete
+        elif finger_count >= 4:
+            return "hârtie"  # Palmă ridicată
+        else:
+            # Caz intermediar (3 degete) - alegem cea mai probabilă
             return "foarfecă"
-        return "piatră"
 
     def _warm_capture(self, attempts: int = 2, delay: float = 0.5):
         """Face mai multe încercări de captură pentru a se asigura că primește un frame valid."""
@@ -126,8 +146,8 @@ class RPSCameraGame:
 
     def play_round(self, camera_index: int = 0) -> Dict:
         """
-        Joacă o rundă. Parametrul camera_index este ignorat, 
-        folosim rpicam-hello care nu necesită index.
+        Joacă o rundă. Sistemul alege aleator, jucătorul alege prin recunoașterea semnului.
+        Timer-ul este gestionat în UI, nu aici.
         """
         try:
             # Capturează frame folosind rpicam-hello
@@ -135,10 +155,20 @@ class RPSCameraGame:
             if frame is None:
                 raise RuntimeError("Nu am putut citi un frame de la cameră.")
 
-            player_move = self._detect_move(frame)
+            # Sistemul alege aleator
             ai_move = random.choice(self.MOVES)
+            
+            # Jucătorul alege prin recunoașterea semnului
+            player_move = self._detect_move(frame)
+            
+            # Determină câștigătorul
             result = self._winner(player_move, ai_move)
-            return {"player_move": player_move, "ai_move": ai_move, "result": result}
+            
+            return {
+                "player_move": player_move,
+                "ai_move": ai_move,
+                "result": result
+            }
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Eroare la rularea rpicam-hello: {e}")
         except FileNotFoundError:
@@ -147,6 +177,7 @@ class RPSCameraGame:
             raise RuntimeError(f"Eroare cameră: {e}")
 
     def _winner(self, player: str, ai: str) -> str:
+        """Determină câștigătorul și returnează mesajul corespunzător."""
         if player == ai:
             return "Egal"
         if (
@@ -154,8 +185,8 @@ class RPSCameraGame:
             or (player == "foarfecă" and ai == "hârtie")
             or (player == "hârtie" and ai == "piatră")
         ):
-            return "Ai câștigat!"
-        return "AI a câștigat!"
+            return "player_wins"  # Jucătorul câștigă
+        return "ai_wins"  # AI câștigă
 
 
 if __name__ == "__main__":

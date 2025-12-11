@@ -416,7 +416,24 @@ ScreenManager:
         Label:
             text: "Piatra - Foarfecă - Hârtie (camera)"
             font_size: "36sp"
+            size_hint_y: 0.15
+
+        Label:
+            text: "Semnale:\\n• Piatra = Pumn închis\\n• Foarfecă = Două degete\\n• Hârtie = Palmă ridicată"
+            font_size: "18sp"
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
             size_hint_y: 0.2
+
+        Label:
+            text: app.rps_timer_text if app.rps_timer_text else ""
+            font_size: "72sp"
+            bold: True
+            color: 1, 0.2, 0.2, 1
+            halign: "center"
+            valign: "middle"
+            size_hint_y: 0.15
 
         Label:
             text: app.rps_status_text
@@ -424,7 +441,7 @@ ScreenManager:
             halign: "center"
             valign: "middle"
             text_size: self.size
-            size_hint_y: 0.6
+            size_hint_y: 0.3
 
         Button:
             text: "Joacă o rundă"

@@ -21,9 +21,7 @@ class CircuitCanvas(Widget):
         self._touch_start = None
         self._start_terminal = None
         self.bulb_lit = False
-        self.bulb2_lit = False
         self.switch_on = False
-        self.switch2_on = False
         self.explosion_active = False
         self.explosion_particles = []
         self.bind(size=self._setup_components)
@@ -39,13 +37,10 @@ class CircuitCanvas(Widget):
         comp_size = min(w, h) * 0.4
         
         # Poziții fixe, mutate foarte sus pentru display touch de 7 inchi
-        # Bateria rotită la 90 de grade, întrerupătoarele și becurile unul peste altul (vertical)
-        # Distanță mare între componente pentru a evita suprapunerea
+        # Bateria rotită la 90 de grade, un singur întrerupător și un singur bec unul sub celălalt
         self.battery_pos = (w * 0.15, h * 0.9)
-        self.switch_pos = (w * 0.5, h * 1.0)  # Primul întrerupător la 100% înălțime (foarte sus)
-        self.switch2_pos = (w * 0.5, h * 0.1)  # Al doilea întrerupător la 10% înălțime (foarte jos)
-        self.bulb_pos = (w * 0.8, h * 1.0)  # Primul bec la 100% înălțime (foarte sus)
-        self.bulb2_pos = (w * 0.8, h * 0.1)  # Al doilea bec la 10% înălțime (foarte jos)
+        self.switch_pos = (w * 0.5, h * 0.9)  # Întrerupător sus
+        self.bulb_pos = (w * 0.5, h * 0.6)  # Bec jos (unul sub celălalt)
         self.comp_size = comp_size
         
         # Terminale mari pentru conexiuni (zone de touch mari)
@@ -68,28 +63,12 @@ class CircuitCanvas(Widget):
                 "pos": (self.switch_pos[0] + comp_size * 0.4, self.switch_pos[1]),
                 "size": terminal_size
             },
-            "switch2_in": {
-                "pos": (self.switch2_pos[0] - comp_size * 0.4, self.switch2_pos[1]),
-                "size": terminal_size
-            },
-            "switch2_out": {
-                "pos": (self.switch2_pos[0] + comp_size * 0.4, self.switch2_pos[1]),
-                "size": terminal_size
-            },
             "bulb_positive": {
                 "pos": (self.bulb_pos[0] - comp_size * 0.4, self.bulb_pos[1] + comp_size * 0.3),
                 "size": terminal_size
             },
             "bulb_negative": {
                 "pos": (self.bulb_pos[0] - comp_size * 0.4, self.bulb_pos[1] - comp_size * 0.3),
-                "size": terminal_size
-            },
-            "bulb2_positive": {
-                "pos": (self.bulb2_pos[0] - comp_size * 0.4, self.bulb2_pos[1] + comp_size * 0.3),
-                "size": terminal_size
-            },
-            "bulb2_negative": {
-                "pos": (self.bulb2_pos[0] - comp_size * 0.4, self.bulb2_pos[1] - comp_size * 0.3),
                 "size": terminal_size
             },
         }
@@ -105,9 +84,7 @@ class CircuitCanvas(Widget):
         """Resetează circuitul."""
         self.connections = []
         self.bulb_lit = False
-        self.bulb2_lit = False
         self.switch_on = False
-        self.switch2_on = False
         self.explosion_active = False
         self.explosion_particles = []
         self._redraw()
@@ -121,14 +98,8 @@ class CircuitCanvas(Widget):
         self._redraw()
 
     def toggle_switch(self):
-        """Comută primul întrerupător."""
+        """Comută întrerupătorul."""
         self.switch_on = not self.switch_on
-        self._redraw()
-        self._check_circuit()
-    
-    def toggle_switch2(self):
-        """Comută al doilea întrerupător."""
-        self.switch2_on = not self.switch2_on
         self._redraw()
         self._check_circuit()
 
@@ -153,9 +124,7 @@ class CircuitCanvas(Widget):
             # Desenează componentele
             self._draw_battery()
             self._draw_switch()
-            self._draw_switch2()
             self._draw_bulb()
-            self._draw_bulb2()
             
             # Desenează explozia dacă e activă
             if self.explosion_active:
@@ -614,59 +583,35 @@ class CircuitCanvas(Widget):
         return nearest
 
     def _check_circuit(self):
-        """Verifică dacă circuitul este complet și corect pentru ambele circuite paralele."""
-        # Verifică conexiunile corecte pentru două circuite paralele:
-        # Circuit 1: battery_positive -> switch_in -> switch_out -> bulb_positive
-        #            battery_negative -> bulb_negative
-        # Circuit 2: battery_positive -> switch2_in -> switch2_out -> bulb2_positive
-        #            battery_negative -> bulb2_negative
+        """Verifică dacă circuitul este complet și corect."""
+        # Verifică conexiunile corecte:
+        # battery_positive -> switch_in -> switch_out -> bulb_positive
+        # battery_negative -> bulb_negative
         
-        # Circuit 1
-        battery_to_switch1 = False
-        switch1_to_bulb1 = False
-        battery_neg_to_bulb1_neg = False
-        
-        # Circuit 2
-        battery_to_switch2 = False
-        switch2_to_bulb2 = False
-        battery_neg_to_bulb2_neg = False
+        battery_to_switch = False
+        switch_to_bulb = False
+        battery_neg_to_bulb_neg = False
         
         for conn in self.connections:
             start = conn["start"]
             end = conn["end"]
             
-            # Circuit 1: Plusul bateriei la intrarea primului întrerupător
+            # Plusul bateriei la intrarea întrerupătorului
             if (start == "battery_positive" and end == "switch_in") or \
                (end == "battery_positive" and start == "switch_in"):
-                battery_to_switch1 = True
+                battery_to_switch = True
             
-            # Circuit 1: Ieșirea primului întrerupător la plusul primului bec
+            # Ieșirea întrerupătorului la plusul becului
             if (start == "switch_out" and end == "bulb_positive") or \
                (end == "switch_out" and start == "bulb_positive"):
-                switch1_to_bulb1 = True
+                switch_to_bulb = True
             
-            # Circuit 1: Minusul bateriei direct la minusul primului bec
+            # Minusul bateriei direct la minusul becului
             if (start == "battery_negative" and end == "bulb_negative") or \
                (end == "battery_negative" and start == "bulb_negative"):
-                battery_neg_to_bulb1_neg = True
-            
-            # Circuit 2: Plusul bateriei la intrarea celui de-al doilea întrerupător
-            if (start == "battery_positive" and end == "switch2_in") or \
-               (end == "battery_positive" and start == "switch2_in"):
-                battery_to_switch2 = True
-            
-            # Circuit 2: Ieșirea celui de-al doilea întrerupător la plusul celui de-al doilea bec
-            if (start == "switch2_out" and end == "bulb2_positive") or \
-               (end == "switch2_out" and start == "bulb2_positive"):
-                switch2_to_bulb2 = True
-            
-            # Circuit 2: Minusul bateriei direct la minusul celui de-al doilea bec
-            if (start == "battery_negative" and end == "bulb2_negative") or \
-               (end == "battery_negative" and start == "bulb2_negative"):
-                battery_neg_to_bulb2_neg = True
+                battery_neg_to_bulb_neg = True
         
-        has_circuit1 = battery_to_switch1 and switch1_to_bulb1 and battery_neg_to_bulb1_neg
-        has_circuit2 = battery_to_switch2 and switch2_to_bulb2 and battery_neg_to_bulb2_neg
+        has_circuit = battery_to_switch and switch_to_bulb and battery_neg_to_bulb_neg
         
         # Verifică dacă există conexiuni greșite (doar dacă există conexiuni)
         wrong_connections = False
@@ -675,20 +620,14 @@ class CircuitCanvas(Widget):
                 start = conn["start"]
                 end = conn["end"]
                 
-                # Conexiuni corecte pentru ambele circuite
+                # Conexiuni corecte
                 is_correct = (
                     (start == "battery_positive" and end == "switch_in") or
                     (end == "battery_positive" and start == "switch_in") or
                     (start == "switch_out" and end == "bulb_positive") or
                     (end == "switch_out" and start == "bulb_positive") or
                     (start == "battery_negative" and end == "bulb_negative") or
-                    (end == "battery_negative" and start == "bulb_negative") or
-                    (start == "battery_positive" and end == "switch2_in") or
-                    (end == "battery_positive" and start == "switch2_in") or
-                    (start == "switch2_out" and end == "bulb2_positive") or
-                    (end == "switch2_out" and start == "bulb2_positive") or
-                    (start == "battery_negative" and end == "bulb2_negative") or
-                    (end == "battery_negative" and start == "bulb2_negative")
+                    (end == "battery_negative" and start == "bulb_negative")
                 )
                 
                 # Dacă există o conexiune care nu este corectă
@@ -696,19 +635,14 @@ class CircuitCanvas(Widget):
                     wrong_connections = True
                     break
         
-        # Circuit complet și corect dacă: toate conexiunile sunt corecte și switch-urile sunt ON
-        if has_circuit1 and self.switch_on:
+        # Circuit complet și corect dacă: toate conexiunile sunt corecte și switch e ON
+        if has_circuit and self.switch_on:
             self.bulb_lit = True
         else:
             self.bulb_lit = False
         
-        if has_circuit2 and self.switch2_on:
-            self.bulb2_lit = True
-        else:
-            self.bulb2_lit = False
-        
-        # Dacă există conexiuni greșite ȘI becurile nu se aprind -> explozie
-        if wrong_connections and not (self.bulb_lit or self.bulb2_lit):
+        # Dacă există conexiuni greșite ȘI becul nu se aprinde -> explozie
+        if wrong_connections and not self.bulb_lit:
             self.explosion_active = True
             self._create_explosion()
             self._redraw()
@@ -722,8 +656,8 @@ class CircuitCanvas(Widget):
             self.explosion_particles = []
             self._redraw()
             
-            # Notifică aplicația dacă ambele circuite funcționează
-            if has_circuit1 and has_circuit2 and self.switch_on and self.switch2_on:
+            # Notifică aplicația dacă circuitul funcționează
+            if has_circuit and self.switch_on:
                 app = App.get_running_app()
                 if hasattr(app, "on_circuit_complete"):
                     Clock.schedule_once(lambda dt: app.on_circuit_complete(), 2.0)

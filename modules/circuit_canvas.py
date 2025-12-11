@@ -33,10 +33,10 @@ class CircuitCanvas(Widget):
         # Componente mult mai mari pentru touchscreen
         comp_size = min(w, h) * 0.4
         
-        # Poziții fixe, centrate vertical, mai sus
-        self.battery_pos = (w * 0.15, h * 0.65)
-        self.switch_pos = (w * 0.5, h * 0.65)
-        self.bulb_pos = (w * 0.85, h * 0.65)
+        # Poziții fixe, mutate mai sus pentru conexiuni mai ușoare
+        self.battery_pos = (w * 0.15, h * 0.8)
+        self.switch_pos = (w * 0.5, h * 0.8)
+        self.bulb_pos = (w * 0.85, h * 0.8)
         self.comp_size = comp_size
         
         # Terminale mari pentru conexiuni (zone de touch mari)
@@ -104,9 +104,8 @@ class CircuitCanvas(Widget):
             return
 
         with self.canvas.before:
-            # Fundal
-            Color(0.96, 0.96, 0.98, 1)
-            Rectangle(pos=self.pos, size=self.size)
+            # Fundal transparent (fără chenar alb)
+            pass
 
         with self.canvas:
             # Desenează conexiunile existente

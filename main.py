@@ -291,7 +291,13 @@ class KioskApp(App):
         self.circuit_game.reset()
         self.circuit_board_text = self.circuit_game.render()
         self.circuit_status_text = "Plasează firele (sus și jos) și pornește întrerupătorul."
-        canvas = self.root.ids.get("circuit_canvas") if self.root else None
+        canvas = None
+        if self.root:
+            try:
+                screen = self.root.get_screen("circuit")
+                canvas = screen.ids.get("circuit_canvas")
+            except Exception:
+                canvas = None
         if canvas:
             canvas.reset_components()
             canvas.clear_lines()

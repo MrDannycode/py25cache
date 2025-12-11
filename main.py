@@ -290,9 +290,7 @@ class KioskApp(App):
 
     # --- Circuit Magic ---
     def _reset_circuit(self):
-        self.circuit_game.reset()
-        self.circuit_board_text = self.circuit_game.render()
-        self.circuit_status_text = "Conectează firele: trage de la baterie către întrerupător, apoi către bec. Apoi apasă pe întrerupător."
+        self.circuit_status_text = "Trage cu degetul de la terminalele componentei pentru a conecta firele. Apoi apasă pe întrerupător."
         canvas = None
         if self.root:
             try:
@@ -304,31 +302,8 @@ class KioskApp(App):
             canvas.reset_components()
             canvas.clear_lines()
 
-    def check_circuit(self):
-        """Verifică circuitul după ce s-a adăugat o conexiune."""
-        canvas = None
-        if self.root:
-            try:
-                screen = self.root.get_screen("circuit")
-                canvas = screen.ids.get("circuit_canvas")
-            except Exception:
-                canvas = None
-        
-        if not canvas:
-            return
-        
-        # Obține conexiunile din canvas
-        connections = canvas.connections
-        self.circuit_game.connections = [
-            (conn["start"], conn["end"]) for conn in connections
-        ]
-        
-        status = self.circuit_game._check_circuit()
-        self._update_circuit_status(status, canvas)
-
     def circuit_toggle_switch(self):
         """Comută întrerupătorul."""
-        status = self.circuit_game.toggle_switch()
         canvas = None
         if self.root:
             try:
@@ -337,34 +312,17 @@ class KioskApp(App):
             except Exception:
                 canvas = None
         
-        # Actualizează starea întrerupătorului în canvas
         if canvas:
-            for comp in canvas.components:
-                if comp["name"] == "switch":
-                    comp["on"] = self.circuit_game.switch_on
-            canvas._redraw()
-        
-        self._update_circuit_status(status, canvas)
+            canvas.toggle_switch()
+            if canvas.bulb_lit:
+                self.circuit_status_text = "Circuit complet! Becul s-a aprins!"
+            else:
+                self.circuit_status_text = "Conectează toate firele și pornește întrerupătorul."
 
-    def _update_circuit_status(self, status: str, canvas=None):
-        """Actualizează statusul circuitului."""
-        self.circuit_board_text = self.circuit_game.render()
-        
-        if status == "win":
-            self.circuit_status_text = "Circuit complet! Becul se aprinde..."
-            # Aprinde becul
-            if canvas:
-                canvas.set_bulb_lit(True)
-            # După 2 secunde, arată popup cu felicitări
-            Clock.schedule_once(lambda dt: self._show_circuit_win_popup(), 2.0)
-        elif status == "need_battery":
-            self.circuit_status_text = "Conectează bateria la întrerupător."
-        elif status == "need_bulb":
-            self.circuit_status_text = "Conectează întrerupătorul la bec."
-        elif status == "need_switch":
-            self.circuit_status_text = "Apasă pe întrerupător pentru a-l porni."
-        else:
-            self.circuit_status_text = "Continuă conectarea firelor."
+    def on_circuit_complete(self):
+        """Callback când circuitul este complet."""
+        self.circuit_status_text = "Felicitări! Circuitul funcționează perfect!"
+        self._show_circuit_win_popup()
 
     def _show_circuit_win_popup(self):
         """Afișează popup cu felicitări când circuitul este complet."""

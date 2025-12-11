@@ -10,65 +10,65 @@
     background_down: ''
     background_color: 0, 0, 0, 0
     color: 0.25, 0.15, 0.10, 1
-    padding: dp(10), dp(8)
-    font_size: "18sp"
+    padding: dp(12), dp(10)
+    font_size: "20sp"
     bold: True
     canvas.before:
-        # Umbră principală (jos) - efect 3D profund
+        # Umbră principală profundă (jos) - efect 3D
         Color:
-            rgba: 0, 0, 0, 0.4
+            rgba: 0, 0, 0, 0.45
         RoundedRectangle:
-            pos: self.x + dp(3), self.y - dp(5)
-            size: self.width - dp(6), self.height
-            radius: [dp(12), dp(12), dp(12), dp(12)]
+            pos: self.x + dp(4), self.y - dp(6)
+            size: self.width - dp(8), self.height
+            radius: [dp(16), dp(16), dp(16), dp(16)]
         # Umbră secundară (mai subtilă)
         Color:
-            rgba: 0, 0, 0, 0.2
+            rgba: 0, 0, 0, 0.25
         RoundedRectangle:
-            pos: self.x + dp(1), self.y - dp(2)
-            size: self.width - dp(2), self.height + dp(1)
-            radius: [dp(12), dp(12), dp(12), dp(12)]
+            pos: self.x + dp(2), self.y - dp(3)
+            size: self.width - dp(4), self.height + dp(2)
+            radius: [dp(16), dp(16), dp(16), dp(16)]
         # Gradient base (simulat cu două straturi)
         # Strat inferior (mai închis)
         Color:
-            rgba: 0.85, 0.80, 0.70, 1
+            rgba: 0.82, 0.77, 0.67, 1
         RoundedRectangle:
-            pos: self.x + dp(1), self.y + dp(1)
-            size: self.width - dp(2), self.height - dp(2)
-            radius: [dp(12), dp(12), dp(12), dp(12)]
+            pos: self.x + dp(2), self.y + dp(2)
+            size: self.width - dp(4), self.height - dp(4)
+            radius: [dp(16), dp(16), dp(16), dp(16)]
         # Strat superior (mai deschis - efect gradient)
         Color:
-            rgba: 1.0, 0.95, 0.85, 1
+            rgba: 1.0, 0.96, 0.88, 1
         RoundedRectangle:
-            pos: self.x + dp(2), self.y + dp(3)
-            size: self.width - dp(4), self.height - dp(4)
-            radius: [dp(12), dp(12), dp(12), dp(12)]
-        # Highlight (iluminare de sus) - efect 3D
+            pos: self.x + dp(3), self.y + dp(4)
+            size: self.width - dp(6), self.height - dp(6)
+            radius: [dp(16), dp(16), dp(16), dp(16)]
+        # Highlight (iluminare de sus) - efect 3D puternic
         Color:
-            rgba: 1, 1, 1, 0.3
+            rgba: 1, 1, 1, 0.35
         RoundedRectangle:
-            pos: self.x + dp(2), self.y + self.height * 0.65
-            size: self.width - dp(4), self.height * 0.35
-            radius: [dp(12), dp(12), 0, 0]
+            pos: self.x + dp(3), self.y + self.height * 0.7
+            size: self.width - dp(6), self.height * 0.3
+            radius: [dp(16), dp(16), 0, 0]
     canvas.after:
         # Glow exterior (mai slab) - efect neon
         Color:
-            rgba: 0.05, 0.78, 1, 0.25
+            rgba: 0.05, 0.78, 1, 0.3
         Line:
-            width: dp(5)
-            rounded_rectangle: (self.x - dp(1), self.y - dp(1), self.width + dp(2), self.height + dp(2), dp(12), dp(12), dp(12), dp(12))
+            width: dp(6)
+            rounded_rectangle: (self.x - dp(2), self.y - dp(2), self.width + dp(4), self.height + dp(4), dp(16), dp(16), dp(16), dp(16))
         # Contur neon principal
         Color:
             rgba: 0.05, 0.78, 1, 1
         Line:
-            width: dp(3)
-            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(12), dp(12), dp(12), dp(12))
+            width: dp(3.5)
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(16), dp(16), dp(16), dp(16))
         # Glow interior (highlight) - efect 3D
         Color:
-            rgba: 0.15, 0.88, 1.0, 0.6
+            rgba: 0.2, 0.9, 1.0, 0.7
         Line:
-            width: dp(1.5)
-            rounded_rectangle: (self.x + dp(2), self.y + dp(2), self.width - dp(4), self.height - dp(4), dp(10), dp(10), dp(10), dp(10))
+            width: dp(2)
+            rounded_rectangle: (self.x + dp(3), self.y + dp(3), self.width - dp(6), self.height - dp(6), dp(14), dp(14), dp(14), dp(14))
 
 ScreenManager:
     id: screen_manager
@@ -120,80 +120,82 @@ ScreenManager:
             outline_color: 0, 0, 0, 0.6
             size_hint_y: 0.15
 
-        # Butoanele principale
-        GridLayout:
-            cols: 2
-            spacing: dp(16)
+        # Butoanele principale - Layout îmbunătățit
+        BoxLayout:
+            orientation: "vertical"
+            spacing: dp(20)
             size_hint_y: 0.65
+            padding: dp(10)
 
-            Button:
-                text: "Informații despre universitate"
-                font_size: "22sp"
-                background_normal: ''
-                background_color: 0.95, 0.95, 1, 1
-                color: 0.1, 0.1, 0.2, 1
-                border: (50,50,50,50)
-                on_press: app.open_university_website()
-                disabled: not app.person_present
+            # Primul rând - 3 butoane mari
+            BoxLayout:
+                spacing: dp(20)
+                size_hint_y: 0.33
 
-            Button:
-                text: "Oracolul AI"
-                font_size: "22sp"
-                background_normal: ''
-                background_color: 0.95, 0.95, 1, 1
-                color: 0.1, 0.1, 0.2, 1
-                border: (50,50,50,50)
-                on_press: root.manager.current = "personality"
-                disabled: not app.person_present
+                Button:
+                    text: "Informații\ndespre universitate"
+                    font_size: "20sp"
+                    bold: True
+                    text_size: self.size
+                    halign: "center"
+                    valign: "middle"
+                    on_press: app.open_university_website()
+                    disabled: not app.person_present
 
-            Button:
-                text: "Geniul tău"
-                text_size: self.size
-                halign: "center"
-                valign: "middle"
-                font_size: "22sp"
-                background_normal: ''
-                background_color: 0.95, 0.95, 1, 1
-                color: 0.1, 0.1, 0.2, 1
-                border: (50,50,50,50)
-                on_press: root.manager.current = "scientist"
-                disabled: not app.person_present
+                Button:
+                    text: "Oracolul\nAI"
+                    font_size: "20sp"
+                    bold: True
+                    text_size: self.size
+                    halign: "center"
+                    valign: "middle"
+                    on_press: root.manager.current = "personality"
+                    disabled: not app.person_present
 
-            Button:
-                text: "Piatra-Foarfecă-AI"
-                text_size: self.size
-                halign: "center"
-                valign: "middle"
-                font_size: "22sp"
-                background_normal: ''
-                background_color: 0.95, 0.95, 1, 1
-                color: 0.1, 0.1, 0.2, 1
-                border: (50,50,50,50)
-                on_press: root.manager.current = "rps"
-                disabled: not app.person_present
+                Button:
+                    text: "Geniul\ntău"
+                    font_size: "20sp"
+                    bold: True
+                    text_size: self.size
+                    halign: "center"
+                    valign: "middle"
+                    on_press: root.manager.current = "scientist"
+                    disabled: not app.person_present
 
-            Button:
-                text: "Labirintul secretelor"
-                text_size: self.size
-                halign: "center"
-                valign: "middle"
-                font_size: "22sp"
-                background_normal: ''
-                background_color: 0.95, 0.95, 1, 1
-                color: 0.1, 0.1, 0.2, 1
-                border: (50,50,50,50)
-                on_press: root.manager.current = "maze"
-                disabled: not app.person_present
+            # Al doilea rând - 3 butoane mari
+            BoxLayout:
+                spacing: dp(20)
+                size_hint_y: 0.33
 
-            Button:
-                text: "Circuitul Magic"
-                text_size: self.size
-                halign: "center"
-                valign: "middle"
-                font_size: "20sp"
-                background_color: 0.95, 0.95, 1, 1
-                on_press: root.manager.current = "circuit"
-                disabled: not app.person_present
+                Button:
+                    text: "Piatra-\nFoarfecă-AI"
+                    font_size: "20sp"
+                    bold: True
+                    text_size: self.size
+                    halign: "center"
+                    valign: "middle"
+                    on_press: root.manager.current = "rps"
+                    disabled: not app.person_present
+
+                Button:
+                    text: "Labirintul\nsecretelor"
+                    font_size: "20sp"
+                    bold: True
+                    text_size: self.size
+                    halign: "center"
+                    valign: "middle"
+                    on_press: root.manager.current = "maze"
+                    disabled: not app.person_present
+
+                Button:
+                    text: "Circuitul\nMagic"
+                    font_size: "20sp"
+                    bold: True
+                    text_size: self.size
+                    halign: "center"
+                    valign: "middle"
+                    on_press: root.manager.current = "circuit"
+                    disabled: not app.person_present
 
 
 <InfoScreen>:
@@ -528,12 +530,12 @@ ScreenManager:
             size_hint_y: 0.12
 
         Label:
-            text: "Conectează firele trăgând cu degetul:\n1. De la baterie la întrerupător\n2. De la întrerupător la bec\n3. Apasă pe întrerupător pentru a-l porni"
-            font_size: "16sp"
+            text: "Conectează firele trăgând cu degetul de la terminalele componentei:\n1. De la terminalul + al bateriei la terminalul de intrare al întrerupătorului\n2. De la terminalul de ieșire al întrerupătorului la terminalele becului\n3. Apasă butonul pentru a porni întrerupătorul"
+            font_size: "15sp"
             halign: "center"
             valign: "middle"
             text_size: self.width * 0.95, None
-            size_hint_y: 0.15
+            size_hint_y: 0.18
 
         CircuitCanvas:
             id: circuit_canvas

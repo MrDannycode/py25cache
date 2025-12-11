@@ -2,7 +2,7 @@ import random
 import time
 from typing import Dict
 
-import cv2t
+import cv2
 import numpy as np
 
 

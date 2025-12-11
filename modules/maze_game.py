@@ -62,7 +62,13 @@ class MazeGame:
         - P: icon om
         - E: stea
         """
-        display = {"#": "██", " ": "  ", self.trail_char: "  ", "P": "🙂", "E": "★"}
+        display = {
+            "#": "██",  # perete
+            " ": "  ",  # coridor liber
+            self.trail_char: "  ",  # traseu ascuns vizual
+            "P": "[color=#4CAF50]🙂[/color]",  # jucător verde
+            "E": "[color=#FFC107]★[/color]",  # ieșire galbenă
+        }
         lines = []
         for row in self.grid:
             lines.append("".join(display.get(ch, "  ") for ch in row))

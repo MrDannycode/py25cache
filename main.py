@@ -496,13 +496,8 @@ class KioskApp(App):
         
         # Afișează imaginea omului de știință dacă există
         if scientist_image_path and os.path.exists(scientist_image_path):
-            # Adaugă un timestamp la source pentru a forța reîncărcarea
-            # Kivy cache-ui imaginile, deci trebuie să forțăm reîncărcarea
-            import time
-            unique_source = f"{scientist_image_path}?{int(time.time() * 1000)}"
-            
             scientist_image = Image(
-                source=unique_source,
+                source=scientist_image_path,
                 allow_stretch=True,
                 keep_ratio=True,
                 size_hint=(1, 1)
@@ -512,11 +507,22 @@ class KioskApp(App):
             # Forțează reîncărcarea după ce popup-ul este deschis
             def force_reload_image(dt):
                 try:
+                    # Șterge cache-ul pentru imagine
+                    from kivy.cache import Cache
+                    Cache.remove('kv.image', scientist_image_path)
+                    Cache.remove('kv.texture', scientist_image_path)
+                    
+                    # Reîncarcă imaginea
                     scientist_image.source = ""
-                    scientist_image.source = unique_source
+                    scientist_image.source = scientist_image_path
                     scientist_image.reload()
-                except:
-                    pass
+                except Exception as e:
+                    print(f"[DEBUG] Eroare la reîncărcarea imaginii: {e}")
+                    # Fallback: încearcă să reîmprospăteze direct
+                    try:
+                        scientist_image.reload()
+                    except:
+                        pass
             
             Clock.schedule_once(force_reload_image, 0.1)
         else:

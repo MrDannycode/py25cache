@@ -25,7 +25,7 @@ class MazeView(Widget):
     path_color = ListProperty([0.65, 0.75, 0.70, 1])
     exit_color = ListProperty([1.0, 0.85, 0.15, 1])
     exit_glow = ListProperty([1.0, 0.95, 0.35, 0.8])
-    player_color = ListProperty([0.15, 0.65, 0.95, 1])
+    player_color = ListProperty([0.61, 0.16, 0.96, 1])  # Violet pentru creier
     player_glow = ListProperty([0.35, 0.85, 1.0, 0.6])
 
     def __init__(self, **kwargs):
@@ -167,16 +167,16 @@ class MazeView(Widget):
                         if len(points) >= 4:
                             Line(points=points, width=2, close=True)
 
-                    # Jucător cu glow și umbră
+                    # Jucător (creier) cu glow și umbră
                     elif cell == "P":
-                        # Umbră sub jucător
+                        # Umbră sub creier
                         Color(0, 0, 0, 0.3)
                         Ellipse(
-                            pos=(x + cw * 0.25, y + ch * 0.1),
-                            size=(cw * 0.5, ch * 0.2)
+                            pos=(x + cw * 0.2, y + ch * 0.1),
+                            size=(cw * 0.6, ch * 0.2)
                         )
 
-                        # Glow exterior
+                        # Glow exterior (violet pentru creier)
                         Color(*self.player_glow)
                         for i in range(2):
                             alpha = 0.4 - (i * 0.2)
@@ -197,28 +197,71 @@ class MazeView(Widget):
                                 )
                             )
 
-                        # Jucător principal
+                        # Creier principal (formă de creier - două emisfere)
                         Color(*self.player_color)
+                        # Emisfera stângă
                         Ellipse(
-                            pos=(x + cw * 0.25, y + ch * 0.2),
-                            size=(cw * 0.5, ch * 0.6)
+                            pos=(x + cw * 0.15, y + ch * 0.25),
+                            size=(cw * 0.35, ch * 0.5)
+                        )
+                        # Emisfera dreaptă
+                        Ellipse(
+                            pos=(x + cw * 0.5, y + ch * 0.25),
+                            size=(cw * 0.35, ch * 0.5)
+                        )
+                        
+                        # Convoluții (linii curbe pentru a arăta ca un creier)
+                        Color(0.8, 0.6, 0.95, 1)
+                        center_x = x + cw * 0.5
+                        center_y = y + ch * 0.5
+                        # Linii curbe pentru convoluții (folosind linii simple)
+                        for i in range(3):
+                            curve_y = center_y - ch * 0.15 + i * ch * 0.15
+                            # Convoluție stângă (linie simplă)
+                            Line(
+                                points=[
+                                    x + cw * 0.2, curve_y,
+                                    x + cw * 0.3, curve_y - ch * 0.03,
+                                    x + cw * 0.4, curve_y,
+                                    x + cw * 0.45, curve_y
+                                ],
+                                width=2
+                            )
+                            # Convoluție dreaptă (linie simplă)
+                            Line(
+                                points=[
+                                    x + cw * 0.55, curve_y,
+                                    x + cw * 0.65, curve_y - ch * 0.03,
+                                    x + cw * 0.75, curve_y,
+                                    x + cw * 0.8, curve_y
+                                ],
+                                width=2
+                            )
+                        
+                        # Highlight pe creier
+                        Color(1, 1, 1, 0.4)
+                        Ellipse(
+                            pos=(x + cw * 0.3, y + ch * 0.4),
+                            size=(cw * 0.4, ch * 0.2)
                         )
 
-                        # Highlight pe jucător
-                        Color(1, 1, 1, 0.5)
-                        Ellipse(
-                            pos=(x + cw * 0.3, y + ch * 0.5),
-                            size=(cw * 0.4, ch * 0.3)
-                        )
-
-                        # Contur
-                        Color(1, 1, 1, 0.8)
+                        # Contur creier
+                        Color(0.4, 0.1, 0.6, 1)
+                        # Contur emisfera stângă
                         Line(
                             ellipse=(
-                                x + cw * 0.25, y + ch * 0.2,
-                                cw * 0.5, ch * 0.6
+                                x + cw * 0.15, y + ch * 0.25,
+                                cw * 0.35, ch * 0.5
                             ),
-                            width=2
+                            width=2.5
+                        )
+                        # Contur emisfera dreaptă
+                        Line(
+                            ellipse=(
+                                x + cw * 0.5, y + ch * 0.25,
+                                cw * 0.35, ch * 0.5
+                            ),
+                            width=2.5
                         )
 
     # --- Gestures ---

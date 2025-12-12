@@ -66,8 +66,8 @@ class MazeGame:
             "#": "┃┃",  # perete ca linie continuă vizual (vertical gros)
             " ": "  ",  # coridor liber
             self.trail_char: "  ",  # traseu ascuns vizual
-            "P": "[color=#4CAF50]🙂[/color]",  # jucător verde
-            "E": "[color=#FFC107]★[/color]",  # ieșire galbenă
+            "P": "[color=#9C27B0]🧠[/color]",  # jucător - creier
+            "E": "[color=#FFC107]📖[/color]",  # ieșire - carte
         }
         lines = []
         for row in self.grid:

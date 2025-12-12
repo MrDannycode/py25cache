@@ -872,8 +872,16 @@ class KioskApp(App):
         player1 = outcome.get("player1_move", "necunoscut")
         player2 = outcome.get("player2_move", "necunoscut")
         result = outcome.get("result", "egal")
+        gestures_detected = outcome.get("gestures_detected", 0)
         
-        print(f"[DEBUG] Player1: {player1}, Player2: {player2}, Result: {result}")
+        print(f"[DEBUG] Player1: {player1}, Player2: {player2}, Result: {result}, Gestures: {gestures_detected}")
+        
+        # Verifică dacă nu s-au detectat gesturi
+        if gestures_detected == 0:
+            self._show_rps_no_gesture_popup()
+            self.rps_timer_text = ""
+            self.rps_status_text = "Atinge «Joacă o rundă» și arată un gest către cameră."
+            return
         
         # Resetează statusul și timer-ul
         self.rps_timer_text = ""
@@ -941,6 +949,36 @@ class KioskApp(App):
         
         popup = Popup(
             title="Eroare",
+            content=content,
+            size_hint=(0.7, 0.4),
+            auto_dismiss=True,
+            pos_hint={'center_x': 0.5, 'center_y': 0.5}
+        )
+        ok_btn.bind(on_press=popup.dismiss)
+        popup.open()
+    
+    def _show_rps_no_gesture_popup(self):
+        """Afișează un popup când nu s-au detectat gesturi."""
+        content = BoxLayout(orientation="vertical", padding=16, spacing=12)
+        
+        message = Label(
+            text="Nu am detectat niciun adversar.\n\nTe rog arată un gest către cameră.",
+            font_size="22sp",
+            bold=True,
+            halign="center",
+            valign="middle",
+            text_size=(450, None),
+        )
+        ok_btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=48,
+        )
+        content.add_widget(message)
+        content.add_widget(ok_btn)
+        
+        popup = Popup(
+            title="Fără gest detectat",
             content=content,
             size_hint=(0.7, 0.4),
             auto_dismiss=True,

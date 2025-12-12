@@ -357,7 +357,8 @@ class RPSCameraGame:
             return {
                 "player1_move": player1_move,
                 "player2_move": player2_move,
-                "result": result
+                "result": result,
+                "gestures_detected": len(gestures)
             }
         except Exception as e:
             raise RuntimeError(f"Eroare cameră: {e}")

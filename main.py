@@ -1,6 +1,8 @@
 import os
 import random
 import webbrowser
+import tempfile
+import cv2
 
 from kivy.config import Config
 
@@ -261,7 +263,18 @@ class PersonalityTestScreen(Screen):
 
 class ScientistMatcherScreen(Screen):
     """Ecran pentru modulul care găsește oameni de știință care seamănă cu elevul."""
-    pass
+    
+    def on_enter(self):
+        """Pornește feed-ul camerei când se intră pe ecran."""
+        app = App.get_running_app()
+        if app:
+            app._start_scientist_camera_feed()
+    
+    def on_leave(self):
+        """Oprește feed-ul camerei când se părăsește ecranul."""
+        app = App.get_running_app()
+        if app:
+            app._stop_scientist_camera_feed()
 
 
 class RPSCameraGameScreen(Screen):
@@ -292,6 +305,7 @@ class KioskApp(App):
     # Proprietăți pentru scientist matcher
     scientist_status_text = StringProperty("Atinge butonul pentru a face o poză și a găsi un om de știință.")
     scientist_photo_path = StringProperty("")
+    scientist_camera_feed = StringProperty("")  # Calea către feed-ul live al camerei
 
     # Proprietăți pentru RPS
     rps_status_text = StringProperty("Atinge «Joacă o rundă» și arată un gest către cameră.")
@@ -421,6 +435,48 @@ class KioskApp(App):
             self.scientist_status_text = f"Poza a fost deschisă!\\nCalea: {self.scientist_photo_path}"
         except Exception as exc:
             self.scientist_status_text = f"Eroare la deschiderea pozei: {exc}"
+    
+    def _start_scientist_camera_feed(self):
+        """Pornește feed-ul live al camerei pentru ecranul scientist."""
+        if hasattr(self, '_scientist_camera_timer') and self._scientist_camera_timer:
+            return  # Deja pornit
+        
+        # Creează un fișier temporar pentru feed
+        self._scientist_camera_temp_file = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+        self._scientist_camera_temp_path = self._scientist_camera_temp_file.name
+        self._scientist_camera_temp_file.close()
+        self.scientist_camera_feed = self._scientist_camera_temp_path
+        
+        # Pornește actualizarea feed-ului
+        self._scientist_camera_timer = Clock.schedule_interval(self._update_scientist_camera_feed, 0.1)  # 10 FPS
+    
+    def _stop_scientist_camera_feed(self):
+        """Oprește feed-ul live al camerei."""
+        if hasattr(self, '_scientist_camera_timer') and self._scientist_camera_timer:
+            self._scientist_camera_timer.cancel()
+            self._scientist_camera_timer = None
+        
+        # Șterge fișierul temporar
+        if hasattr(self, '_scientist_camera_temp_path') and os.path.exists(self._scientist_camera_temp_path):
+            try:
+                os.unlink(self._scientist_camera_temp_path)
+            except:
+                pass
+        
+        self.scientist_camera_feed = ""
+    
+    def _update_scientist_camera_feed(self, dt):
+        """Actualizează feed-ul camerei capturând un nou frame."""
+        try:
+            frame = self.scientist_matcher._capture_frame_rpicam()
+            if frame is not None and hasattr(self, '_scientist_camera_temp_path'):
+                # Salvează frame-ul ca imagine
+                cv2.imwrite(self._scientist_camera_temp_path, frame)
+                # Forțează reîncărcarea în widget
+                self.scientist_camera_feed = self._scientist_camera_temp_path
+        except Exception as e:
+            # Ignoră erorile pentru a nu întrerupe feed-ul
+            pass
 
     # --- RPS ---
     def play_rps_round(self):

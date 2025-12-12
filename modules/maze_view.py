@@ -167,9 +167,9 @@ class MazeView(Widget):
                         if len(points) >= 4:
                             Line(points=points, width=2, close=True)
 
-                    # Jucător (creier) cu glow și umbră
+                    # Jucător (imagine pngegg.png) cu glow și umbră
                     elif cell == "P":
-                        # Umbră sub creier
+                        # Umbră sub imagine
                         Color(0, 0, 0, 0.3)
                         Ellipse(
                             pos=(x + cw * 0.2, y + ch * 0.1),
@@ -197,71 +197,12 @@ class MazeView(Widget):
                                 )
                             )
 
-                        # Creier principal (formă de creier - două emisfere)
-                        Color(*self.player_color)
-                        # Emisfera stângă
-                        Ellipse(
-                            pos=(x + cw * 0.15, y + ch * 0.25),
-                            size=(cw * 0.35, ch * 0.5)
-                        )
-                        # Emisfera dreaptă
-                        Ellipse(
-                            pos=(x + cw * 0.5, y + ch * 0.25),
-                            size=(cw * 0.35, ch * 0.5)
-                        )
-                        
-                        # Convoluții (linii curbe pentru a arăta ca un creier)
-                        Color(0.8, 0.6, 0.95, 1)
-                        center_x = x + cw * 0.5
-                        center_y = y + ch * 0.5
-                        # Linii curbe pentru convoluții (folosind linii simple)
-                        for i in range(3):
-                            curve_y = center_y - ch * 0.15 + i * ch * 0.15
-                            # Convoluție stângă (linie simplă)
-                            Line(
-                                points=[
-                                    x + cw * 0.2, curve_y,
-                                    x + cw * 0.3, curve_y - ch * 0.03,
-                                    x + cw * 0.4, curve_y,
-                                    x + cw * 0.45, curve_y
-                                ],
-                                width=2
-                            )
-                            # Convoluție dreaptă (linie simplă)
-                            Line(
-                                points=[
-                                    x + cw * 0.55, curve_y,
-                                    x + cw * 0.65, curve_y - ch * 0.03,
-                                    x + cw * 0.75, curve_y,
-                                    x + cw * 0.8, curve_y
-                                ],
-                                width=2
-                            )
-                        
-                        # Highlight pe creier
-                        Color(1, 1, 1, 0.4)
-                        Ellipse(
-                            pos=(x + cw * 0.3, y + ch * 0.4),
-                            size=(cw * 0.4, ch * 0.2)
-                        )
-
-                        # Contur creier
-                        Color(0.4, 0.1, 0.6, 1)
-                        # Contur emisfera stângă
-                        Line(
-                            ellipse=(
-                                x + cw * 0.15, y + ch * 0.25,
-                                cw * 0.35, ch * 0.5
-                            ),
-                            width=2.5
-                        )
-                        # Contur emisfera dreaptă
-                        Line(
-                            ellipse=(
-                                x + cw * 0.5, y + ch * 0.25,
-                                cw * 0.35, ch * 0.5
-                            ),
-                            width=2.5
+                        # Imaginea creierului (pngegg.png)
+                        Color(1, 1, 1, 1)  # Culoare albă pentru a nu afecta imaginea
+                        Rectangle(
+                            pos=(x + cw * 0.2, y + ch * 0.2),
+                            size=(cw * 0.6, ch * 0.6),
+                            source='assets/images/pngegg.png'
                         )
 
     # --- Gestures ---

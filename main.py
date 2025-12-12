@@ -487,14 +487,24 @@ class KioskApp(App):
         )
         content.add_widget(camera_image)
         
+        # Butoane: Fă poză și Închide camera
+        buttons_layout = BoxLayout(orientation="horizontal", spacing=10, size_hint_y=None, height=50)
+        
+        # Buton "Fă poză"
+        capture_btn = Button(
+            text="Fă poză",
+            font_size="20sp"
+        )
+        buttons_layout.add_widget(capture_btn)
+        
         # Buton de închidere
         close_btn = Button(
             text="Închide camera",
-            size_hint_y=None,
-            height=50,
             font_size="20sp"
         )
-        content.add_widget(close_btn)
+        buttons_layout.add_widget(close_btn)
+        
+        content.add_widget(buttons_layout)
         
         # Creează popup-ul centrat
         popup = Popup(
@@ -509,6 +519,23 @@ class KioskApp(App):
         def close_camera_feed(instance):
             popup.dismiss()
             self._stop_scientist_camera_feed()
+        
+        # Funcție pentru a face poza și a face matching-ul
+        def capture_photo(instance):
+            # Oprește feed-ul temporar
+            if hasattr(self, '_scientist_camera_timer') and self._scientist_camera_timer:
+                self._scientist_camera_timer.cancel()
+                self._scientist_camera_timer = None
+            
+            # Capturează poza și face matching-ul
+            self._capture_scientist_photo()
+            
+            # Închide popup-ul după captură
+            popup.dismiss()
+            self._stop_scientist_camera_feed()
+        
+        # Butonul "Fă poză" capturează poza
+        capture_btn.bind(on_press=capture_photo)
         
         # Butonul de închidere închide popup-ul și oprește feed-ul
         close_btn.bind(on_press=close_camera_feed)

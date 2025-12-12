@@ -404,23 +404,11 @@ ScreenManager:
             text_size: self.size
             size_hint_y: 0.3
 
-        BoxLayout:
-            orientation: "vertical"
-            spacing: dp(12)
+        Button:
+            text: "Fă o poză și găsește potrivirea"
+            font_size: "20sp"
             size_hint_y: 0.35
-
-            Button:
-                text: "Fă o poză și găsește potrivirea"
-                font_size: "20sp"
-                size_hint_y: 0.5
-                on_press: app.capture_scientist_match()
-
-            Button:
-                text: "Descarcă poza cu casca" if app.scientist_photo_path else "Fă mai întâi o poză"
-                font_size: "20sp"
-                size_hint_y: 0.5
-                disabled: not app.scientist_photo_path
-                on_press: app.download_scientist_photo()
+            on_press: app.capture_scientist_match()
 
         Button:
             text: "Înapoi"

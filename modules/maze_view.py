@@ -121,12 +121,19 @@ class MazeView(Widget):
                                     size=(cw // 4, ch // 4)
                                 )
 
-                    # Ieșire cu glow animat
+                    # Ieșire (imagine Albert Einstein)
                     if cell == "E":
-                        # Glow exterior
+                        # Umbră sub imagine
+                        Color(0, 0, 0, 0.3)
+                        Ellipse(
+                            pos=(x + cw * 0.2, y + ch * 0.1),
+                            size=(cw * 0.6, ch * 0.2)
+                        )
+
+                        # Glow exterior (galben pentru Einstein)
                         Color(*self.exit_glow)
-                        for i in range(3):
-                            alpha = 0.3 - (i * 0.1)
+                        for i in range(2):
+                            alpha = 0.4 - (i * 0.2)
                             Color(
                                 self.exit_glow[0],
                                 self.exit_glow[1],
@@ -135,43 +142,22 @@ class MazeView(Widget):
                             )
                             Ellipse(
                                 pos=(
-                                    x + cw * (0.1 - i * 0.05),
-                                    y + ch * (0.1 - i * 0.05)
+                                    x + cw * (0.2 - i * 0.05),
+                                    y + ch * (0.15 - i * 0.05)
                                 ),
                                 size=(
-                                    cw * (0.8 + i * 0.1),
-                                    ch * (0.8 + i * 0.1)
+                                    cw * (0.6 + i * 0.1),
+                                    ch * (0.7 + i * 0.1)
                                 )
                             )
 
-                        # Ieșire principală
-                        Color(*self.exit_color)
-                        Ellipse(
-                            pos=(x + cw * 0.15, y + ch * 0.15),
-                            size=(cw * 0.7, ch * 0.7)
+                        # Imaginea Albert Einstein
+                        Color(1, 1, 1, 1)  # Culoare albă pentru a nu afecta imaginea
+                        Rectangle(
+                            pos=(x + cw * 0.2, y + ch * 0.2),
+                            size=(cw * 0.6, ch * 0.6),
+                            source='assets/images/Albert_Einstein_sticks_his_tongue.jpg'
                         )
-
-                        # Highlight pe ieșire
-                        Color(1, 1, 1, 0.4)
-                        Ellipse(
-                            pos=(x + cw * 0.25, y + ch * 0.5),
-                            size=(cw * 0.5, ch * 0.3)
-                        )
-
-                        # Simbol stea (simplificat)
-                        Color(1, 1, 1, 0.9)
-                        center_x = x + cw * 0.5
-                        center_y = y + ch * 0.5
-                        star_size = min(cw, ch) * 0.2
-                        # Desenează o stea simplă cu linii
-                        points = []
-                        for i in range(5):
-                            angle = (i * 2 * math.pi / 5) - math.pi / 2
-                            px = center_x + star_size * 0.8 * math.cos(angle)
-                            py = center_y + star_size * 0.8 * math.sin(angle)
-                            points.extend([px, py])
-                        if len(points) >= 4:
-                            Line(points=points, width=2, close=True)
 
                     # Jucător (imagine pngegg.png) cu glow și umbră
                     elif cell == "P":

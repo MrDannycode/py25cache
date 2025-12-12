@@ -445,6 +445,15 @@ class KioskApp(App):
         self._scientist_camera_temp_file = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
         self._scientist_camera_temp_path = self._scientist_camera_temp_file.name
         self._scientist_camera_temp_file.close()
+        
+        # Face o captură inițială pentru a avea ceva de afișat
+        try:
+            initial_frame = self.scientist_matcher._capture_frame_rpicam()
+            if initial_frame is not None:
+                cv2.imwrite(self._scientist_camera_temp_path, initial_frame)
+        except:
+            pass
+        
         self.scientist_camera_feed = self._scientist_camera_temp_path
         
         # Creează popup-ul cu feed-ul camerei
@@ -452,7 +461,7 @@ class KioskApp(App):
         
         # Imaginea feed-ului camerei
         camera_image = Image(
-            source=self.scientist_camera_feed if self.scientist_camera_feed else "",
+            source=self._scientist_camera_temp_path,
             allow_stretch=True,
             keep_ratio=True,
             size_hint=(1, 0.9)
@@ -494,6 +503,9 @@ class KioskApp(App):
         # Deschide popup-ul
         popup.open()
         
+        # Face o captură inițială după ce popup-ul este deschis
+        Clock.schedule_once(lambda dt: self._update_scientist_camera_feed(0), 0.2)
+        
         # Pornește actualizarea feed-ului
         self._scientist_camera_timer = Clock.schedule_interval(self._update_scientist_camera_feed, 0.1)  # 10 FPS
     
@@ -532,17 +544,24 @@ class KioskApp(App):
             if not hasattr(self, '_scientist_camera_popup') or not self._scientist_camera_popup:
                 return
             
+            if not hasattr(self, '_scientist_camera_image') or not self._scientist_camera_image:
+                return
+            
             frame = self.scientist_matcher._capture_frame_rpicam()
             if frame is not None and hasattr(self, '_scientist_camera_temp_path'):
                 # Salvează frame-ul ca imagine
                 cv2.imwrite(self._scientist_camera_temp_path, frame)
-                # Actualizează imaginea în popup
-                if hasattr(self, '_scientist_camera_image') and self._scientist_camera_image:
+                # Actualizează imaginea în popup folosind un timestamp pentru a forța reîncărcarea
+                import time
+                timestamp = int(time.time() * 1000)  # Milisecunde pentru timestamp unic
+                # Setează sursa cu timestamp pentru a forța reîncărcarea
+                self._scientist_camera_image.source = f"{self._scientist_camera_temp_path}?t={timestamp}"
+                # Forțează reîncărcarea
+                try:
+                    self._scientist_camera_image.reload()
+                except:
+                    # Dacă reload nu funcționează, setează din nou sursa fără timestamp
                     self._scientist_camera_image.source = self._scientist_camera_temp_path
-                    try:
-                        self._scientist_camera_image.reload()
-                    except:
-                        pass
         except Exception as e:
             # Ignoră erorile pentru a nu întrerupe feed-ul
             pass

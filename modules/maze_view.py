@@ -214,6 +214,7 @@ class MazeView(Widget):
         sx, sy = self._touch_start
         dx = touch.x - sx
         dy = touch.y - sy
+        distance = math.sqrt(dx * dx + dy * dy)
         self._touch_start = None
 
         threshold = max(self.width, self.height) * 0.04
@@ -226,9 +227,21 @@ class MazeView(Widget):
         else:
             direction = "up" if dy > 0 else "down"
 
-        self.dispatch("on_swipe", direction)
+        # Calculează numărul de celule pe baza distanței
+        # Folosește dimensiunea medie a celulei pentru a determina câte celule
+        if not self.grid or not self.width or not self.height:
+            cells = 1
+        else:
+            rows = len(self.grid)
+            cols = len(self.grid[0]) if rows else 1
+            avg_cell_size = (self.width / cols + self.height / rows) / 2
+            # Numărul de celule = distanța / dimensiunea medie a celulei
+            # Minimum 1 celulă, maximum 5 celule pentru o glisare foarte lungă
+            cells = max(1, min(5, int(distance / avg_cell_size) + 1))
+
+        self.dispatch("on_swipe", direction, cells)
         return True
 
-    def on_swipe(self, direction: str):
+    def on_swipe(self, direction: str, cells: int):
         """Custom event dispatched when a swipe is detected."""
         pass

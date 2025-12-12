@@ -477,18 +477,27 @@ class KioskApp(App):
         self.maze_grid = [row[:] for row in self.maze_game.grid]
         self.maze_status_text = "Găsește ieșirea!"
 
-    def move_maze(self, direction: str):
-        status = self.maze_game.move(direction)
-        self.maze_display_text = self.maze_game.render()
-        self.maze_grid = [row[:] for row in self.maze_game.grid]
-        if status == "win":
-            self.maze_status_text = "Bravo! Ai găsit ieșirea. Apasă «Repornește»."
-            self._show_maze_win_popup()
-        elif status == "block":
-            self.maze_status_text = "Perete! Încearcă altă direcție."
-            self._show_maze_wall_popup()
-        else:
-            self.maze_status_text = "Găsește ieșirea!"
+    def move_maze(self, direction: str, cells: int = 1):
+        """
+        Mișcă creierul în labirint.
+        Dacă glisarea este mai lungă, se mișcă mai multe celule.
+        """
+        # Încearcă să se miște de câte ori este necesar (până la numărul de celule)
+        for _ in range(cells):
+            status = self.maze_game.move(direction)
+            self.maze_display_text = self.maze_game.render()
+            self.maze_grid = [row[:] for row in self.maze_game.grid]
+            
+            if status == "win":
+                self.maze_status_text = "Bravo! Ai găsit ieșirea. Apasă «Repornește»."
+                self._show_maze_win_popup()
+                break  # Oprește mișcarea dacă a câștigat
+            elif status == "block":
+                self.maze_status_text = "Perete! Încearcă altă direcție."
+                self._show_maze_wall_popup()
+                break  # Oprește mișcarea dacă s-a lovit de perete
+            else:
+                self.maze_status_text = "Găsește ieșirea!"
 
     def _show_maze_win_popup(self):
         # Listă de curiozități despre lume

@@ -518,8 +518,8 @@ class KioskApp(App):
         Clock.schedule_once(force_reload_image, 0.1)
         Clock.schedule_once(lambda dt: self._update_scientist_camera_feed(0), 0.3)
         
-        # Pornește actualizarea feed-ului
-        self._scientist_camera_timer = Clock.schedule_interval(self._update_scientist_camera_feed, 0.1)  # 10 FPS
+        # Pornește actualizarea feed-ului cu interval mai mare pentru a evita timeout-urile
+        self._scientist_camera_timer = Clock.schedule_interval(self._update_scientist_camera_feed, 0.5)  # 2 FPS pentru a evita timeout-urile
     
     def _stop_scientist_camera_feed(self):
         """Oprește feed-ul live al camerei și închide popup-ul."""

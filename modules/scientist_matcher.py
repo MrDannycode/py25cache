@@ -105,7 +105,7 @@ class ScientistMatcher:
 
     def _capture_frame_rpicam(self) -> Optional[np.ndarray]:
         """
-        Capturează un frame folosind rpicam-hello --timeout 0.
+        Capturează un frame folosind rpicam-hello cu timeout scurt.
         Returnează imaginea ca numpy array (BGR pentru OpenCV).
         """
         # Creează un fișier temporar pentru imagine
@@ -114,30 +114,60 @@ class ScientistMatcher:
         temp_file.close()
         
         try:
-            # Rulează rpicam-hello pentru a captura o imagine
+            # Rulează rpicam-hello cu timeout de 1 secundă pentru captură rapidă
+            # Folosim --timeout 1000 (milisecunde) în loc de 0
             cmd = [
                 "rpicam-hello",
-                "--timeout", "0",
-                "--output", temp_path
+                "--timeout", "1000",  # 1 secundă în loc de 0
+                "--output", temp_path,
+                "--width", "640",
+                "--height", "480"
             ]
             
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=15
+                timeout=3  # Timeout mai scurt pentru subprocess
             )
             
             if result.returncode != 0:
-                raise RuntimeError(f"rpicam-hello a eșuat: {result.stderr}")
+                # Dacă eșuează, încearcă cu rpicam-vid pentru o captură mai rapidă
+                try:
+                    cmd_vid = [
+                        "rpicam-vid",
+                        "--frames", "1",
+                        "--output", temp_path,
+                        "--width", "640",
+                        "--height", "480"
+                    ]
+                    result = subprocess.run(
+                        cmd_vid,
+                        capture_output=True,
+                        text=True,
+                        timeout=3
+                    )
+                    if result.returncode != 0:
+                        raise RuntimeError(f"rpicam-vid a eșuat: {result.stderr}")
+                except FileNotFoundError:
+                    raise RuntimeError(f"rpicam-hello a eșuat: {result.stderr}")
             
             # Citește imaginea capturată
+            if not os.path.exists(temp_path):
+                raise RuntimeError("Fișierul capturat nu există.")
+            
             frame = cv2.imread(temp_path)
             if frame is None:
                 raise RuntimeError("Nu am putut citi imaginea capturată.")
             
             return frame
             
+        except subprocess.TimeoutExpired:
+            # Dacă timeout, returnează None în loc să arunce eroare
+            return None
+        except Exception as e:
+            # Pentru feed live, nu aruncăm eroare, doar returnăm None
+            return None
         finally:
             # Șterge fișierul temporar
             if os.path.exists(temp_path):

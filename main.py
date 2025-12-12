@@ -19,7 +19,9 @@ from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.image import Image
+from kivy.animation import Animation
 from pathlib import Path
+import re
 
 from modules.personality_test import PersonalityTest
 from modules.scientist_matcher import ScientistMatcher
@@ -42,18 +44,29 @@ class ScreensaverScreen(Screen):
         self._load_images()
     
     def _load_images(self):
-        """Încarcă imaginile din folderul prezentare."""
+        """Încarcă imaginile din folderul prezentare și le sortează după număr."""
         prezentare_dir = Path("assets/images/prezentare")
         if prezentare_dir.exists():
-            # Sortează imaginile după nume pentru ordine corectă
-            self.image_paths = sorted(prezentare_dir.glob("*.png"))
-            self.image_paths.extend(sorted(prezentare_dir.glob("*.jpg")))
-            self.image_paths.extend(sorted(prezentare_dir.glob("*.jpeg")))
+            # Colectează toate imaginile
+            all_images = list(prezentare_dir.glob("*.png"))
+            all_images.extend(prezentare_dir.glob("*.jpg"))
+            all_images.extend(prezentare_dir.glob("*.jpeg"))
+            
+            # Sortează după numărul din numele fișierului
+            def extract_number(path):
+                """Extrage numărul din numele fișierului."""
+                match = re.search(r'(\d+)', path.name)
+                if match:
+                    return int(match.group(1))
+                return 0
+            
+            self.image_paths = sorted(all_images, key=extract_number)
     
     def on_enter(self):
         """Când intră pe ecran, pornește slideshow-ul."""
         if self.image_paths:
-            self._show_current_image()
+            # Prima imagine fără fade
+            self._show_current_image(fade_in=False)
             # Schimbă imaginea la fiecare 5 secunde
             self.slide_timer = Clock.schedule_interval(self._next_image, 5.0)
     
@@ -63,24 +76,48 @@ class ScreensaverScreen(Screen):
             self.slide_timer.cancel()
             self.slide_timer = None
     
-    def _show_current_image(self):
-        """Afișează imaginea curentă."""
+    def _show_current_image(self, fade_in=True):
+        """Afișează imaginea curentă cu efect de fade."""
         if not self.image_paths:
             return
         
         image_path = self.image_paths[self.current_image_index]
         # Actualizează imaginea în widget
         if hasattr(self, 'ids') and 'screensaver_image' in self.ids:
-            self.ids.screensaver_image.source = str(image_path)
-            self.ids.screensaver_image.reload()
+            img_widget = self.ids.screensaver_image
+            
+            if fade_in:
+                # Efect de fade: opacitate de la 0 la 1
+                img_widget.opacity = 0
+                img_widget.source = str(image_path)
+                img_widget.reload()
+                
+                # Animație fade in
+                anim = Animation(opacity=1, duration=1.0)
+                anim.start(img_widget)
+            else:
+                # Fără fade pentru prima imagine
+                img_widget.source = str(image_path)
+                img_widget.reload()
+                img_widget.opacity = 1
     
     def _next_image(self, dt):
-        """Trece la următoarea imagine."""
+        """Trece la următoarea imagine cu efect de fade."""
         if not self.image_paths:
             return
         
-        self.current_image_index = (self.current_image_index + 1) % len(self.image_paths)
-        self._show_current_image()
+        # Fade out imaginea curentă
+        if hasattr(self, 'ids') and 'screensaver_image' in self.ids:
+            img_widget = self.ids.screensaver_image
+            anim_out = Animation(opacity=0, duration=0.5)
+            
+            def on_complete(anim, widget):
+                # După fade out, schimbă imaginea și face fade in
+                self.current_image_index = (self.current_image_index + 1) % len(self.image_paths)
+                self._show_current_image(fade_in=True)
+            
+            anim_out.bind(on_complete=on_complete)
+            anim_out.start(img_widget)
     
     def on_touch_down(self, touch):
         """La click sau touch, trece la ecranul principal."""

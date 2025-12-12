@@ -65,10 +65,10 @@ class ScreensaverScreen(Screen):
     def on_enter(self):
         """Când intră pe ecran, pornește slideshow-ul."""
         if self.image_paths:
-            # Prima imagine fără fade
-            self._show_current_image(fade_in=False)
-            # Schimbă imaginea la fiecare 5 secunde
-            self.slide_timer = Clock.schedule_interval(self._next_image, 5.0)
+            # Așteaptă puțin pentru ca widget-ul să fie complet inițializat
+            Clock.schedule_once(lambda dt: self._show_current_image(fade_in=False), 0.1)
+            # Schimbă imaginea la fiecare 9 secunde (5 + 4)
+            self.slide_timer = Clock.schedule_interval(self._next_image, 9.0)
     
     def on_leave(self):
         """Când părăsește ecranul, oprește timer-ul."""
@@ -90,16 +90,41 @@ class ScreensaverScreen(Screen):
                 # Efect de fade: opacitate de la 0 la 1
                 img_widget.opacity = 0
                 img_widget.source = str(image_path)
-                img_widget.reload()
+                # Forțează reîncărcarea
+                try:
+                    img_widget.reload()
+                except:
+                    pass
                 
                 # Animație fade in
                 anim = Animation(opacity=1, duration=1.0)
                 anim.start(img_widget)
             else:
-                # Fără fade pentru prima imagine
+                # Fără fade pentru prima imagine - asigură-te că se vede
                 img_widget.source = str(image_path)
-                img_widget.reload()
                 img_widget.opacity = 1
+                # Forțează reîncărcarea
+                try:
+                    img_widget.reload()
+                except:
+                    pass
+                # Așteaptă puțin și verifică din nou
+                Clock.schedule_once(lambda dt: self._ensure_image_visible(), 0.2)
+    
+    def _ensure_image_visible(self):
+        """Asigură-te că imaginea este vizibilă."""
+        if hasattr(self, 'ids') and 'screensaver_image' in self.ids:
+            img_widget = self.ids.screensaver_image
+            if img_widget.opacity < 1:
+                img_widget.opacity = 1
+            if not img_widget.source:
+                # Reîncarcă dacă sursa lipsește
+                if self.image_paths:
+                    img_widget.source = str(self.image_paths[self.current_image_index])
+                    try:
+                        img_widget.reload()
+                    except:
+                        pass
     
     def _next_image(self, dt):
         """Trece la următoarea imagine cu efect de fade."""

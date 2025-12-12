@@ -125,12 +125,14 @@ class ScientistMatcher:
         try:
             # Rulează rpicam-hello cu timeout de 1 secundă pentru captură rapidă
             # Folosim --timeout 1000 (milisecunde) în loc de 0
+            # --nopreview oprește fereastra de preview
             cmd = [
                 "rpicam-hello",
                 "--timeout", "1000",  # 1 secundă în loc de 0
                 "--output", temp_path,
                 "--width", "640",
-                "--height", "480"
+                "--height", "480",
+                "--nopreview"  # Oprește fereastra de preview
             ]
             
             result = subprocess.run(
@@ -148,7 +150,8 @@ class ScientistMatcher:
                         "--frames", "1",
                         "--output", temp_path,
                         "--width", "640",
-                        "--height", "480"
+                        "--height", "480",
+                        "--nopreview"  # Oprește fereastra de preview
                     ]
                     result = subprocess.run(
                         cmd_vid,

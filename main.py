@@ -574,36 +574,21 @@ class KioskApp(App):
                 return
             
             # Folosește fișierul persistent pentru feed live
+            # _capture_frame_rpicam salvează direct la output_path, deci nu mai trebuie cv2.imwrite
             frame = self.scientist_matcher._capture_frame_rpicam(output_path=self._scientist_camera_temp_path)
-            if frame is not None:
-                # Salvează frame-ul ca imagine
-                success = cv2.imwrite(self._scientist_camera_temp_path, frame)
-                if not success:
-                    print(f"[DEBUG] Eroare la salvarea frame-ului la {self._scientist_camera_temp_path}")
-                    return
-                
-                # Verifică dacă fișierul a fost creat
-                if not os.path.exists(self._scientist_camera_temp_path):
-                    print(f"[DEBUG] Fișierul {self._scientist_camera_temp_path} nu există după salvare!")
-                    return
-                
-                # Actualizează imaginea în popup folosind un timestamp pentru a forța reîncărcarea
-                import time
-                timestamp = int(time.time() * 1000)  # Milisecunde pentru timestamp unic
-                # Setează sursa cu timestamp pentru a forța reîncărcarea
-                new_source = f"{self._scientist_camera_temp_path}?t={timestamp}"
-                self._scientist_camera_image.source = new_source
+            
+            # Verifică dacă fișierul există (chiar dacă frame este None, fișierul ar putea fi creat)
+            if os.path.exists(self._scientist_camera_temp_path):
+                # Actualizează imaginea în popup - nu folosim timestamp pentru fișiere locale
+                # Doar reîncărcăm direct
+                if self._scientist_camera_image.source != self._scientist_camera_temp_path:
+                    self._scientist_camera_image.source = self._scientist_camera_temp_path
                 
                 # Forțează reîncărcarea
                 try:
                     self._scientist_camera_image.reload()
-                except Exception as reload_error:
-                    # Dacă reload nu funcționează, setează din nou sursa fără timestamp
-                    self._scientist_camera_image.source = self._scientist_camera_temp_path
-                    try:
-                        self._scientist_camera_image.reload()
-                    except:
-                        pass
+                except:
+                    pass
         except Exception as e:
             # Afișează eroarea pentru debugging
             print(f"[DEBUG] Eroare la actualizarea feed-ului: {e}")

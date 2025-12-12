@@ -92,8 +92,14 @@ class MazeView(Widget):
 
                     # Podea / traseu
                     if cell == ".":
-                        # Traseu parcurs (mai deschis)
-                        Color(*self.path_color)
+                        # Traseu parcurs - afișează ca podea normală (fără urmă vizuală)
+                        Color(*self.floor_shadow)
+                        Rectangle(
+                            pos=(x + cw * 0.05, y + ch * 0.05),
+                            size=(cw * 0.95, ch * 0.95)
+                        )
+                        Color(*self.floor_color)
+                        Rectangle(pos=(x, y), size=(cw, ch))
                     else:
                         # Podea normală
                         # Umbră subtilă pentru adâncime
@@ -197,12 +203,12 @@ class MazeView(Widget):
                                 )
                             )
 
-                        # Imaginea creierului (pngegg.png)
+                        # Imaginea creierului (creier.png)
                         Color(1, 1, 1, 1)  # Culoare albă pentru a nu afecta imaginea
                         Rectangle(
                             pos=(x + cw * 0.2, y + ch * 0.2),
                             size=(cw * 0.6, ch * 0.6),
-                            source='assets/images/pngegg.png'
+                            source='assets/images/creier.png'
                         )
 
     # --- Gestures ---

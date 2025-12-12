@@ -242,19 +242,23 @@ class RPSCameraGame:
     def _detect_gesture_fallback(self, frame: np.ndarray) -> List[Tuple[str, float]]:
         """Metodă alternativă de detectare când MediaPipe nu e disponibil."""
         # Folosește metoda veche de numărare degete
-        finger_count = self._count_fingers_advanced(frame)
+        finger_count, confidence = self._count_fingers_advanced(frame)
+        
+        # Dacă nu s-a detectat cu încredere o mână, returnează lista goală
+        if confidence < 0.3:
+            return []
         
         if finger_count == 0 or finger_count == 1:
-            return [("piatră", 0.6)]
+            return [("piatră", confidence)]
         elif finger_count == 2:
-            return [("foarfecă", 0.6)]
+            return [("foarfecă", confidence)]
         elif finger_count >= 4:
-            return [("hârtie", 0.6)]
+            return [("hârtie", confidence)]
         else:
-            return [("piatră", 0.4)]  # Default
+            return [("piatră", confidence * 0.7)]  # Default cu încredere redusă
 
-    def _count_fingers_advanced(self, frame) -> int:
-        """Numără degetele folosind metoda veche (fallback)."""
+    def _count_fingers_advanced(self, frame) -> Tuple[int, float]:
+        """Numără degetele folosind metoda veche (fallback). Returnează (număr_degete, încredere)."""
         h, w, _ = frame.shape
         cx, cy = w // 2, h // 2
         size = min(h, w) // 3
@@ -262,7 +266,7 @@ class RPSCameraGame:
                     max(0, cx - size):min(w, cx + size)]
         
         if roi.size == 0:
-            return 0
+            return (0, 0.0)
 
         gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -271,19 +275,29 @@ class RPSCameraGame:
 
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if not contours:
-            return 0
+            return (0, 0.0)
 
         max_contour = max(contours, key=cv2.contourArea)
-        if cv2.contourArea(max_contour) < 3000:
-            return 0
+        contour_area = cv2.contourArea(max_contour)
+        
+        # Verifică dacă conturul este suficient de mare (mână reală)
+        min_area = 5000  # Aria minimă pentru o mână detectată
+        max_area = roi.shape[0] * roi.shape[1] * 0.8  # Nu poate ocupa mai mult de 80% din ROI
+        
+        if contour_area < min_area or contour_area > max_area:
+            return (0, 0.0)
+        
+        # Calculează încrederea bazată pe aria conturului
+        roi_area = roi.shape[0] * roi.shape[1]
+        confidence = min(1.0, contour_area / (roi_area * 0.3))  # Încredere bazată pe cât de mare este conturul
 
         hull = cv2.convexHull(max_contour, returnPoints=False)
         if hull is None or len(hull) < 3:
-            return 0
+            return (0, confidence * 0.5)  # Încredere redusă dacă nu există hull
 
         defects = cv2.convexityDefects(max_contour, hull)
         if defects is None:
-            return 0
+            return (0, confidence * 0.5)  # Încredere redusă dacă nu există defects
 
         finger_count = 0
         for i in range(defects.shape[0]):
@@ -300,8 +314,15 @@ class RPSCameraGame:
             
             if angle <= np.pi / 2 and d > 15000:
                 finger_count += 1
-
-        return finger_count
+        
+        # Verifică dacă numărul de degete este rezonabil (0-5)
+        finger_count = min(finger_count, 5)
+        
+        # Ajustează încrederea bazată pe numărul de defects detectate
+        if defects.shape[0] < 2:
+            confidence *= 0.5  # Încredere redusă dacă prea puține defects
+        
+        return (finger_count, confidence)
 
     def _warm_capture(self, attempts: int = 2, delay: float = 0.5):
         """Face mai multe încercări de captură."""

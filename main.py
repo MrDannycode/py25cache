@@ -415,11 +415,11 @@ class KioskApp(App):
         try:
             match = self.scientist_matcher.capture_and_match(camera_index=self.camera_index)
         except Exception as exc:
-            self.scientist_status_text = f"Eroare cameră: {exc}"
+            self._show_scientist_error_popup(f"Eroare cameră: {exc}")
             return
 
         if not match:
-            self.scientist_status_text = "Nu am putut detecta o față. Încearcă din nou."
+            self._show_scientist_error_popup("Nu am putut detecta o față. Încearcă din nou.")
             return
 
         name = match.get("name", "Om de știință misterios")
@@ -427,7 +427,8 @@ class KioskApp(App):
         photo_path = match.get("edited_photo_path", "")
         
         self.scientist_photo_path = photo_path
-        self.scientist_status_text = f"Semeni cu {name}!\\n{desc}\\n\\nPoza ta cu casca este gata! Poți o descărca mai jos."
+        self.scientist_status_text = "Atinge butonul pentru a face o poză și a găsi un om de știință."
+        self._show_scientist_result_popup(name, desc, photo_path)
     
     def _capture_scientist_photo_from_frame(self, frame):
         """Capturează poza și face matching-ul folosind un frame deja capturat."""
@@ -437,7 +438,7 @@ class KioskApp(App):
             # Detectează fața în frame
             faces = self.scientist_matcher._detect_face(frame)
             if len(faces) == 0:
-                self.scientist_status_text = "Nu am putut detecta o față. Încearcă din nou."
+                self._show_scientist_error_popup("Nu am putut detecta o față. Încearcă din nou.")
                 return
             
             # Alege prima față detectată
@@ -459,9 +460,69 @@ class KioskApp(App):
             desc = scientist.description
             
             self.scientist_photo_path = output_path
-            self.scientist_status_text = f"Semeni cu {name}!\\n{desc}\\n\\nPoza ta cu casca este gata! Poți o descărca mai jos."
+            self.scientist_status_text = "Atinge butonul pentru a face o poză și a găsi un om de știință."
+            self._show_scientist_result_popup(name, desc, output_path)
         except Exception as exc:
-            self.scientist_status_text = f"Eroare la procesarea imaginii: {exc}"
+            self._show_scientist_error_popup(f"Eroare la procesarea imaginii: {exc}")
+    
+    def _show_scientist_result_popup(self, name: str, desc: str, photo_path: str):
+        """Afișează rezultatul matching-ului într-un popup."""
+        content = BoxLayout(orientation="vertical", padding=16, spacing=12)
+        
+        message = Label(
+            text=f"Semeni cu {name}!\n\n{desc}\n\nPoza ta cu casca este gata!",
+            font_size="22sp",
+            bold=True,
+            halign="center",
+            valign="middle",
+            text_size=(450, None),
+        )
+        ok_btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=48,
+        )
+        content.add_widget(message)
+        content.add_widget(ok_btn)
+        
+        popup = Popup(
+            title="Rezultat",
+            content=content,
+            size_hint=(0.7, 0.5),
+            auto_dismiss=True,
+            pos_hint={'center_x': 0.5, 'center_y': 0.5}
+        )
+        ok_btn.bind(on_press=popup.dismiss)
+        popup.open()
+    
+    def _show_scientist_error_popup(self, error_message: str):
+        """Afișează o eroare într-un popup."""
+        content = BoxLayout(orientation="vertical", padding=16, spacing=12)
+        
+        message = Label(
+            text=error_message,
+            font_size="20sp",
+            halign="center",
+            valign="middle",
+            text_size=(450, None),
+        )
+        ok_btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=48,
+        )
+        content.add_widget(message)
+        content.add_widget(ok_btn)
+        
+        popup = Popup(
+            title="Eroare",
+            content=content,
+            size_hint=(0.7, 0.4),
+            auto_dismiss=True,
+            pos_hint={'center_x': 0.5, 'center_y': 0.5}
+        )
+        ok_btn.bind(on_press=popup.dismiss)
+        popup.open()
 
     def download_scientist_photo(self):
         """Deschide poza în aplicația default sau copiază în clipboard."""

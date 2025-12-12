@@ -217,16 +217,23 @@ class MazeView(Widget):
         distance = math.sqrt(dx * dx + dy * dy)
         self._touch_start = None
 
-        threshold = max(self.width, self.height) * 0.04
+        # Threshold mai mare pentru a reduce sensibilitatea (0.08 în loc de 0.04)
+        # Threshold mai mare pentru a reduce sensibilitatea (0.08 în loc de 0.04)
+        threshold = max(self.width, self.height) * 0.08
         if abs(dx) < threshold and abs(dy) < threshold:
             return True
+
+        # Distanță minimă pentru a detecta o glisare (10% din dimensiunea ecranului)
+        min_swipe_distance = max(self.width, self.height) * 0.1
+        if distance < min_swipe_distance:
+            return True  # Glisare prea scurtă, ignoră
 
         direction = None
         if abs(dx) > abs(dy):
             direction = "right" if dx > 0 else "left"
         else:
             direction = "up" if dy > 0 else "down"
-
+        
         # Calculează numărul de celule pe baza distanței
         # Folosește dimensiunea medie a celulei pentru a determina câte celule
         if not self.grid or not self.width or not self.height:
@@ -237,7 +244,8 @@ class MazeView(Widget):
             avg_cell_size = (self.width / cols + self.height / rows) / 2
             # Numărul de celule = distanța / dimensiunea medie a celulei
             # Minimum 1 celulă, maximum 5 celule pentru o glisare foarte lungă
-            cells = max(1, min(5, int(distance / avg_cell_size) + 1))
+            # Ajustat pentru a necesita o distanță mai mare pentru mai multe celule
+            cells = max(1, min(5, int(distance / (avg_cell_size * 1.5)) + 1))
 
         self.dispatch("on_swipe", direction, cells)
         return True

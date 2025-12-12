@@ -264,12 +264,6 @@ class PersonalityTestScreen(Screen):
 class ScientistMatcherScreen(Screen):
     """Ecran pentru modulul care găsește oameni de știință care seamănă cu elevul."""
     
-    def on_enter(self):
-        """Pornește feed-ul camerei când se intră pe ecran."""
-        app = App.get_running_app()
-        if app:
-            app._start_scientist_camera_feed()
-    
     def on_leave(self):
         """Oprește feed-ul camerei când se părăsește ecranul."""
         app = App.get_running_app()
@@ -404,6 +398,17 @@ class KioskApp(App):
 
     # --- Scientist matcher ---
     def capture_scientist_match(self):
+        # Pornește feed-ul camerei când se apasă butonul
+        if not (hasattr(self, '_scientist_camera_popup') and self._scientist_camera_popup):
+            self._start_scientist_camera_feed()
+            # Așteaptă puțin pentru ca feed-ul să pornească
+            Clock.schedule_once(lambda dt: self._capture_scientist_photo(), 0.5)
+        else:
+            # Dacă feed-ul este deja pornit, capturează direct
+            self._capture_scientist_photo()
+    
+    def _capture_scientist_photo(self):
+        """Capturează poza și face matching-ul."""
         self.scientist_status_text = "Capturez... te rog stai nemișcat(ă)."
         self.scientist_photo_path = ""
         try:

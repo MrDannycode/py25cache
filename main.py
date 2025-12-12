@@ -41,6 +41,7 @@ class ScreensaverScreen(Screen):
         self.image_paths = []
         self.current_image_index = 0
         self.slide_timer = None
+        self._touch_start = None
         self._load_images()
     
     def _load_images(self):
@@ -145,11 +146,103 @@ class ScreensaverScreen(Screen):
             anim_out.start(img_widget)
     
     def on_touch_down(self, touch):
-        """La click sau touch, trece la ecranul principal."""
-        app = App.get_running_app()
-        if app and app.root:
-            app.root.current = "home"
+        """Detectează începutul unui swipe sau click."""
+        if self.collide_point(*touch.pos):
+            self._touch_start = touch.pos
+            return True
+        return super().on_touch_down(touch)
+    
+    def on_touch_move(self, touch):
+        """Detectează mișcarea pentru swipe."""
+        if self._touch_start is None:
+            return super().on_touch_move(touch)
         return True
+    
+    def on_touch_up(self, touch):
+        """Detectează finalul swipe-ului sau click-ul."""
+        if self._touch_start is None:
+            return super().on_touch_up(touch)
+        
+        if not self.collide_point(*touch.pos):
+            self._touch_start = None
+            return super().on_touch_up(touch)
+        
+        # Calculează distanța și direcția swipe-ului
+        dx = touch.x - self._touch_start[0]
+        dy = touch.y - self._touch_start[1]
+        
+        # Threshold pentru a distinge între swipe și click
+        swipe_threshold = 50
+        
+        if abs(dx) > swipe_threshold or abs(dy) > swipe_threshold:
+            # Este un swipe
+            if abs(dx) > abs(dy):
+                # Swipe orizontal
+                if dx > 0:
+                    # Swipe la dreapta - imaginea anterioară
+                    self._previous_image()
+                else:
+                    # Swipe la stânga - imaginea următoare
+                    self._next_image_manual()
+            # Dacă e swipe vertical, nu facem nimic (sau poți adăuga funcționalitate)
+        else:
+            # Este un click - trece la ecranul principal
+            app = App.get_running_app()
+            if app and app.root:
+                app.root.current = "home"
+        
+        self._touch_start = None
+        return True
+    
+    def _previous_image(self):
+        """Trece la imaginea anterioară."""
+        if not self.image_paths:
+            return
+        
+        # Oprește timer-ul temporar
+        if self.slide_timer:
+            self.slide_timer.cancel()
+        
+        # Fade out imaginea curentă
+        if hasattr(self, 'ids') and 'screensaver_image' in self.ids:
+            img_widget = self.ids.screensaver_image
+            anim_out = Animation(opacity=0, duration=0.5)
+            
+            def on_complete(anim, widget):
+                # După fade out, schimbă la imaginea anterioară
+                self.current_image_index = (self.current_image_index - 1) % len(self.image_paths)
+                self._show_current_image(fade_in=True)
+                # Repornește timer-ul
+                if self.image_paths:
+                    self.slide_timer = Clock.schedule_interval(self._next_image, 9.0)
+            
+            anim_out.bind(on_complete=on_complete)
+            anim_out.start(img_widget)
+    
+    def _next_image_manual(self):
+        """Trece manual la imaginea următoare (folosit pentru swipe)."""
+        if not self.image_paths:
+            return
+        
+        # Oprește timer-ul temporar
+        if self.slide_timer:
+            self.slide_timer.cancel()
+        
+        # Fade out imaginea curentă
+        if hasattr(self, 'ids') and 'screensaver_image' in self.ids:
+            img_widget = self.ids.screensaver_image
+            anim_out = Animation(opacity=0, duration=0.5)
+            
+            def on_complete(anim, widget):
+                # După fade out, schimbă la imaginea următoare
+                self.current_image_index = (self.current_image_index + 1) % len(self.image_paths)
+                self._show_current_image(fade_in=True)
+                # Repornește timer-ul
+                if self.image_paths:
+                    self.slide_timer = Clock.schedule_interval(self._next_image, 9.0)
+            
+            anim_out.bind(on_complete=on_complete)
+            anim_out.start(img_widget)
 
 class HomeScreen(Screen):
     """Ecranul principal, cu butoanele pentru toate modulele."""

@@ -25,13 +25,43 @@ class ScientistMatcher:
     """
 
     def __init__(self, scientists: Optional[List[Scientist]] = None):
-        self.scientists = scientists or self._default_scientists()
         self.face_cascade = cv2.CascadeClassifier(
             cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
         )
         # Director pentru pozele salvate
         self.output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "output_photos")
         os.makedirs(self.output_dir, exist_ok=True)
+        
+        # Inițializează oamenii de știință (după ce toate metodele sunt disponibile)
+        self.scientists = scientists or self._default_scientists()
+
+    def _find_scientist_image(self, name: str, base_dir: str) -> Optional[str]:
+        """Găsește imaginea pentru un om de știință bazat pe nume."""
+        # Caută fișiere care conțin numele omului de știință (case-insensitive)
+        name_lower = name.lower().replace(" ", "_")
+        
+        # Extensii posibile
+        extensions = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG']
+        
+        for ext in extensions:
+            # Încearcă exact numele
+            image_path = os.path.join(base_dir, f"{name_lower}{ext}")
+            if os.path.exists(image_path):
+                return image_path
+            
+            # Încearcă cu nume parțial
+            for file in os.listdir(base_dir):
+                if name_lower in file.lower() and file.lower().endswith(ext.lower()):
+                    image_path = os.path.join(base_dir, file)
+                    if os.path.exists(image_path):
+                        return image_path
+        
+        # Fallback: folosește imaginea lui Einstein dacă există
+        einstein_path = os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")
+        if os.path.exists(einstein_path):
+            return einstein_path
+        
+        return None
 
     def _default_scientists(self) -> List[Scientist]:
         # Căi către imaginile oamenilor de știință
@@ -40,32 +70,32 @@ class ScientistMatcher:
             Scientist(
                 "Albert Einstein", 
                 "Pionier în fizica teoretică și relativitate.",
-                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")
+                image_path=self._find_scientist_image("Albert Einstein", base_dir)
             ),
             Scientist(
                 "Marie Curie", 
                 "Cercetătoare în radioactivitate, dublu Nobel.",
-                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+                image_path=self._find_scientist_image("Marie Curie", base_dir)
             ),
             Scientist(
                 "Nikola Tesla", 
                 "Inventator și vizionar al curentului alternativ.",
-                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+                image_path=self._find_scientist_image("Nikola Tesla", base_dir)
             ),
             Scientist(
                 "Ada Lovelace", 
                 "Prima programatoare, a imaginat mașini computaționale.",
-                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+                image_path=self._find_scientist_image("Ada Lovelace", base_dir)
             ),
             Scientist(
                 "Rosalind Franklin", 
                 "A elucidat structura ADN prin difracție cu raze X.",
-                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+                image_path=self._find_scientist_image("Rosalind Franklin", base_dir)
             ),
             Scientist(
                 "Katherine Johnson", 
                 "Matematiciană NASA, calcule critice pentru zboruri spațiale.",
-                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+                image_path=self._find_scientist_image("Katherine Johnson", base_dir)
             ),
         ]
 

@@ -495,40 +495,57 @@ class KioskApp(App):
         image_layout = BoxLayout(orientation="vertical", size_hint_x=0.4)
         
         # Afișează imaginea omului de știință dacă există
-        if scientist_image_path and os.path.exists(scientist_image_path):
-            scientist_image = Image(
-                source=scientist_image_path,
-                allow_stretch=True,
-                keep_ratio=True,
-                size_hint=(1, 1)
-            )
-            image_layout.add_widget(scientist_image)
+        if scientist_image_path:
+            # Convertește la cale absolută pentru a evita problemele cu cache-ul
+            abs_image_path = os.path.abspath(scientist_image_path)
             
-            # Forțează reîncărcarea după ce popup-ul este deschis
-            def force_reload_image(dt):
-                try:
-                    # Șterge cache-ul pentru imagine
-                    from kivy.cache import Cache
-                    Cache.remove('kv.image', scientist_image_path)
-                    Cache.remove('kv.texture', scientist_image_path)
-                    
-                    # Reîncarcă imaginea
-                    scientist_image.source = ""
-                    scientist_image.source = scientist_image_path
-                    scientist_image.reload()
-                except Exception as e:
-                    print(f"[DEBUG] Eroare la reîncărcarea imaginii: {e}")
-                    # Fallback: încearcă să reîmprospăteze direct
+            if os.path.exists(abs_image_path):
+                print(f"[DEBUG] Încarc imaginea: {abs_image_path}, există: {os.path.exists(abs_image_path)}")
+                
+                scientist_image = Image(
+                    source=abs_image_path,
+                    allow_stretch=True,
+                    keep_ratio=True,
+                    size_hint=(1, 1)
+                )
+                image_layout.add_widget(scientist_image)
+                
+                # Forțează reîncărcarea după ce popup-ul este deschis
+                def force_reload_image(dt):
                     try:
-                        scientist_image.reload()
-                    except:
-                        pass
-            
-            Clock.schedule_once(force_reload_image, 0.1)
+                        # Șterge cache-ul pentru imagine
+                        from kivy.cache import Cache
+                        try:
+                            Cache.remove('kv.image', abs_image_path)
+                        except:
+                            pass
+                        try:
+                            Cache.remove('kv.texture', abs_image_path)
+                        except:
+                            pass
+                        
+                        # Reîncarcă imaginea
+                        scientist_image.source = ""
+                        Clock.schedule_once(lambda dt2: setattr(scientist_image, 'source', abs_image_path), 0.05)
+                        Clock.schedule_once(lambda dt2: scientist_image.reload(), 0.1)
+                    except Exception as e:
+                        print(f"[DEBUG] Eroare la reîncărcarea imaginii: {e}")
+                
+                Clock.schedule_once(force_reload_image, 0.2)
+            else:
+                print(f"[DEBUG] Imaginea nu există: {abs_image_path}")
+                # Placeholder dacă nu există imagine
+                placeholder = Label(
+                    text=f"Imagine\n{name}",
+                    font_size="16sp",
+                    halign="center",
+                    valign="middle",
+                )
+                image_layout.add_widget(placeholder)
         else:
-            # Placeholder dacă nu există imagine
+            # Placeholder dacă nu există cale
             placeholder = Label(
-                text="Imagine\nom de știință",
+                text=f"Imagine\n{name}",
                 font_size="16sp",
                 halign="center",
                 valign="middle",

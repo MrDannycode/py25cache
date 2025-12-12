@@ -287,6 +287,22 @@ class CircuitGameScreen(Screen):
     pass
 
 
+class PersonDetectionScreen(Screen):
+    """Ecran pentru detectarea persoanei cu camera live."""
+    
+    def on_enter(self):
+        """Pornește feed-ul camerei când intră pe ecran."""
+        app = App.get_running_app()
+        if app:
+            app._start_person_detection_camera_feed()
+    
+    def on_leave(self):
+        """Oprește feed-ul camerei când se părăsește ecranul."""
+        app = App.get_running_app()
+        if app:
+            app._stop_person_detection_camera_feed()
+
+
 class KioskApp(App):
     # True dacă a fost detectată o persoană în fața camerei
     person_present = BooleanProperty(False)
@@ -314,6 +330,10 @@ class KioskApp(App):
     # Proprietăți pentru Circuit
     circuit_board_text = StringProperty("")
     circuit_status_text = StringProperty("Plasează firele și pornește întrerupătorul.")
+
+    # Proprietăți pentru detectare persoană
+    person_detection_camera_feed = StringProperty("")
+    person_detection_status_text = StringProperty("Camera live. Apasă 'Detectează' pentru a detecta o persoană.")
 
     def build(self):
         self.title = "Universitatea Dunărea de Jos Galați"
@@ -345,10 +365,9 @@ class KioskApp(App):
         return
     
     def toggle_person_detection(self):
-        """Comută starea detectării persoanei."""
-        self.person_present = not self.person_present
-        status = "activată" if self.person_present else "dezactivată"
-        print(f"[DEBUG] Detectare persoană {status}")
+        """Navighează la ecranul de detectare persoană."""
+        if self.root:
+            self.root.current = "person_detection"
 
     # --- Info screen ---
     def open_university_website(self):
@@ -363,6 +382,11 @@ class KioskApp(App):
         """Revine la ecranul principal."""
         if self.root:
             self.root.current = "home"
+    
+    def toggle_person_detection(self):
+        """Navighează la ecranul de detectare persoană."""
+        if self.root:
+            self.root.current = "person_detection"
 
     # --- Personalitate ---
     def _reset_personality_test(self):
@@ -917,6 +941,129 @@ class KioskApp(App):
         
         popup = Popup(
             title="Eroare",
+            content=content,
+            size_hint=(0.7, 0.4),
+            auto_dismiss=True,
+            pos_hint={'center_x': 0.5, 'center_y': 0.5}
+        )
+        ok_btn.bind(on_press=popup.dismiss)
+        popup.open()
+    
+    # --- Person Detection ---
+    def _start_person_detection_camera_feed(self):
+        """Pornește feed-ul live al camerei pentru detectarea persoanei."""
+        if hasattr(self, '_person_detection_camera_timer') and self._person_detection_camera_timer:
+            return  # Deja pornit
+        
+        # Creează un fișier temporar pentru feed
+        self._person_detection_camera_temp_file = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+        self._person_detection_camera_temp_path = self._person_detection_camera_temp_file.name
+        self._person_detection_camera_temp_file.close()
+        
+        # Face o captură inițială
+        try:
+            initial_frame = self.scientist_matcher._capture_frame_rpicam(output_path=self._person_detection_camera_temp_path)
+            if initial_frame is None:
+                if not os.path.exists(self._person_detection_camera_temp_path) or os.path.getsize(self._person_detection_camera_temp_path) == 0:
+                    import numpy as np
+                    placeholder = np.zeros((480, 640, 3), dtype=np.uint8)
+                    cv2.imwrite(self._person_detection_camera_temp_path, placeholder)
+        except Exception as e:
+            import numpy as np
+            placeholder = np.zeros((480, 640, 3), dtype=np.uint8)
+            cv2.imwrite(self._person_detection_camera_temp_path, placeholder)
+        
+        self.person_detection_camera_feed = self._person_detection_camera_temp_path
+        
+        # Pornește actualizarea feed-ului
+        self._person_detection_camera_timer = Clock.schedule_interval(self._update_person_detection_camera_feed, 0.5)
+    
+    def _stop_person_detection_camera_feed(self):
+        """Oprește feed-ul live al camerei pentru detectarea persoanei."""
+        # Oprește timer-ul
+        if hasattr(self, '_person_detection_camera_timer') and self._person_detection_camera_timer:
+            self._person_detection_camera_timer.cancel()
+            self._person_detection_camera_timer = None
+        
+        # Șterge fișierul temporar
+        if hasattr(self, '_person_detection_camera_temp_path') and os.path.exists(self._person_detection_camera_temp_path):
+            try:
+                os.unlink(self._person_detection_camera_temp_path)
+            except:
+                pass
+        
+        self.person_detection_camera_feed = ""
+    
+    def _update_person_detection_camera_feed(self, dt):
+        """Actualizează feed-ul camerei pentru detectarea persoanei."""
+        try:
+            if not hasattr(self, '_person_detection_camera_temp_path'):
+                return
+            
+            # Obține dimensiunea curentă a fișierului înainte de captură
+            old_file_size = os.path.getsize(self._person_detection_camera_temp_path) if os.path.exists(self._person_detection_camera_temp_path) else 0
+            
+            # Capturează un nou frame
+            frame = self.scientist_matcher._capture_frame_rpicam(output_path=self._person_detection_camera_temp_path)
+            
+            # Verifică dacă fișierul există și are conținut
+            if os.path.exists(self._person_detection_camera_temp_path) and os.path.getsize(self._person_detection_camera_temp_path) > 0:
+                new_file_size = os.path.getsize(self._person_detection_camera_temp_path)
+                
+                # Actualizează imaginea doar dacă fișierul s-a schimbat
+                if new_file_size != old_file_size:
+                    self.person_detection_camera_feed = ""
+                    self.person_detection_camera_feed = self._person_detection_camera_temp_path
+        except Exception as e:
+            print(f"[DEBUG] Eroare la actualizarea feed-ului detectare persoană: {e}")
+    
+    def detect_person(self):
+        """Detectează o persoană în feed-ul camerei."""
+        self.person_detection_status_text = "Detectez persoană... te rog așteaptă."
+        try:
+            # Capturează un frame
+            if hasattr(self, '_person_detection_camera_temp_path') and os.path.exists(self._person_detection_camera_temp_path):
+                frame = cv2.imread(self._person_detection_camera_temp_path)
+                if frame is not None:
+                    # Detectează fața
+                    faces = self.scientist_matcher._detect_face(frame)
+                    if len(faces) > 0:
+                        self.person_present = True
+                        self.person_detection_status_text = f"Persoană detectată! {len(faces)} față(e) găsită(e)."
+                        # Afișează un popup de confirmare
+                        self._show_person_detected_popup(len(faces))
+                    else:
+                        self.person_present = False
+                        self.person_detection_status_text = "Nu am putut detecta o persoană. Încearcă din nou."
+                else:
+                    self.person_detection_status_text = "Nu am putut citi frame-ul. Încearcă din nou."
+            else:
+                self.person_detection_status_text = "Camera nu este pregătită. Așteaptă puțin."
+        except Exception as exc:
+            self.person_detection_status_text = f"Eroare la detectare: {exc}"
+    
+    def _show_person_detected_popup(self, num_faces: int):
+        """Afișează un popup când o persoană este detectată."""
+        content = BoxLayout(orientation="vertical", padding=16, spacing=12)
+        
+        message = Label(
+            text=f"Persoană detectată!\n\n{num_faces} față(e) găsită(e).\n\nButoanele au fost activate.",
+            font_size="22sp",
+            bold=True,
+            halign="center",
+            valign="middle",
+            text_size=(450, None),
+        )
+        ok_btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=48,
+        )
+        content.add_widget(message)
+        content.add_widget(ok_btn)
+        
+        popup = Popup(
+            title="Persoană detectată",
             content=content,
             size_hint=(0.7, 0.4),
             auto_dismiss=True,

@@ -130,12 +130,11 @@ class ScientistMatcher:
                 except:
                     pass
             
-            # Rulează rpicam-hello cu timeout de 1 secundă pentru captură rapidă
-            # Folosim --timeout 1000 (milisecunde) în loc de 0
-            # --nopreview oprește fereastra de preview
+            # Folosește rpicam-still pentru capturi statice (mai rapid și mai fiabil)
+            # rpicam-still este specializat pentru capturi statice
             cmd = [
-                "rpicam-hello",
-                "--timeout", "1000",  # 1 secundă în loc de 0
+                "rpicam-still",
+                "--timeout", "1000",  # 1 secundă
                 "--output", temp_path,
                 "--width", "640",
                 "--height", "480",
@@ -152,36 +151,47 @@ class ScientistMatcher:
             
             # Așteaptă puțin pentru a se asigura că fișierul este scris complet
             import time
-            time.sleep(0.1)
+            time.sleep(0.2)
             
-            print(f"[DEBUG] rpicam-hello returncode: {result.returncode}")
+            print(f"[DEBUG] rpicam-still returncode: {result.returncode}")
             if result.stdout:
-                print(f"[DEBUG] rpicam-hello stdout: {result.stdout[:200]}")
+                print(f"[DEBUG] rpicam-still stdout: {result.stdout[:200]}")
             if result.stderr:
-                print(f"[DEBUG] rpicam-hello stderr: {result.stderr[:200]}")
+                print(f"[DEBUG] rpicam-still stderr: {result.stderr[:200]}")
             
-            # Verifică dacă fișierul a fost creat chiar dacă returncode nu este 0
+            # Verifică dacă fișierul a fost creat
             file_exists = os.path.exists(temp_path) and os.path.getsize(temp_path) > 0
             print(f"[DEBUG] Fișierul există: {os.path.exists(temp_path)}, size: {os.path.getsize(temp_path) if os.path.exists(temp_path) else 0}")
             
-            if result.returncode != 0 and not file_exists:
-                # Dacă eșuează, încearcă cu rpicam-vid pentru o captură mai rapidă
+            if not file_exists:
+                # Dacă rpicam-still eșuează, încearcă cu rpicam-vid
                 try:
+                    print(f"[DEBUG] Încerc rpicam-vid ca fallback")
+                    # Șterge din nou fișierul
+                    if os.path.exists(temp_path):
+                        try:
+                            os.unlink(temp_path)
+                        except:
+                            pass
+                    
                     cmd_vid = [
                         "rpicam-vid",
                         "--frames", "1",
                         "--output", temp_path,
                         "--width", "640",
                         "--height", "480",
-                        "--nopreview"  # Oprește fereastra de preview
+                        "--nopreview"
                     ]
                     result = subprocess.run(
                         cmd_vid,
                         capture_output=True,
                         text=True,
-                        timeout=3
+                        timeout=5
                     )
-                    if result.returncode != 0:
+                    time.sleep(0.2)
+                    file_exists = os.path.exists(temp_path) and os.path.getsize(temp_path) > 0
+                    print(f"[DEBUG] rpicam-vid returncode: {result.returncode}, file_exists: {file_exists}")
+                    if not file_exists:
                         return None
                 except FileNotFoundError:
                     return None

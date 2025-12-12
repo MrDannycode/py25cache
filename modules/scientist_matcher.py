@@ -45,27 +45,27 @@ class ScientistMatcher:
             Scientist(
                 "Marie Curie", 
                 "Cercetătoare în radioactivitate, dublu Nobel.",
-                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+                image_path=os.path.join(base_dir, "marie-curie-12879-portrait-medium,jpg")  # Placeholder
             ),
             Scientist(
                 "Nikola Tesla", 
                 "Inventator și vizionar al curentului alternativ.",
-                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+                image_path=os.path.join(base_dir, "c0240185-800px-wm,jpg")  # Placeholder
             ),
             Scientist(
                 "Ada Lovelace", 
                 "Prima programatoare, a imaginat mașini computaționale.",
-                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+                image_path=os.path.join(base_dir, "47.jpg")  # Placeholder
             ),
             Scientist(
                 "Rosalind Franklin", 
                 "A elucidat structura ADN prin difracție cu raze X.",
-                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+                image_path=os.path.join(base_dir, "rosalind-franklin-9301344-1-402,jpg")  # Placeholder
             ),
             Scientist(
                 "Katherine Johnson", 
                 "Matematiciană NASA, calcule critice pentru zboruri spațiale.",
-                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+                image_path=os.path.join(base_dir, "re9XNr6eWvXmhQrUpKqKyS.jpg")  # Placeholder
             ),
         ]
 

@@ -34,13 +34,39 @@ class ScientistMatcher:
         os.makedirs(self.output_dir, exist_ok=True)
 
     def _default_scientists(self) -> List[Scientist]:
+        # Căi către imaginile oamenilor de știință
+        base_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "images")
         return [
-            Scientist("Albert Einstein", "Pionier în fizica teoretică și relativitate."),
-            Scientist("Marie Curie", "Cercetătoare în radioactivitate, dublu Nobel."),
-            Scientist("Nikola Tesla", "Inventator și vizionar al curentului alternativ."),
-            Scientist("Ada Lovelace", "Prima programatoare, a imaginat mașini computaționale."),
-            Scientist("Rosalind Franklin", "A elucidat structura ADN prin difracție cu raze X."),
-            Scientist("Katherine Johnson", "Matematiciană NASA, calcule critice pentru zboruri spațiale."),
+            Scientist(
+                "Albert Einstein", 
+                "Pionier în fizica teoretică și relativitate.",
+                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")
+            ),
+            Scientist(
+                "Marie Curie", 
+                "Cercetătoare în radioactivitate, dublu Nobel.",
+                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+            ),
+            Scientist(
+                "Nikola Tesla", 
+                "Inventator și vizionar al curentului alternativ.",
+                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+            ),
+            Scientist(
+                "Ada Lovelace", 
+                "Prima programatoare, a imaginat mașini computaționale.",
+                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+            ),
+            Scientist(
+                "Rosalind Franklin", 
+                "A elucidat structura ADN prin difracție cu raze X.",
+                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+            ),
+            Scientist(
+                "Katherine Johnson", 
+                "Matematiciană NASA, calcule critice pentru zboruri spațiale.",
+                image_path=os.path.join(base_dir, "Albert_Einstein_sticks_his_tongue.jpg")  # Placeholder
+            ),
         ]
 
     def _detect_face(self, frame):

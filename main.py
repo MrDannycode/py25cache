@@ -425,10 +425,11 @@ class KioskApp(App):
         name = match.get("name", "Om de știință misterios")
         desc = match.get("description", "")
         photo_path = match.get("edited_photo_path", "")
+        scientist_image_path = match.get("image_path", "")
         
         self.scientist_photo_path = photo_path
         self.scientist_status_text = "Atinge butonul pentru a face o poză și a găsi un om de știință."
-        self._show_scientist_result_popup(name, desc, photo_path)
+        self._show_scientist_result_popup(name, desc, photo_path, scientist_image_path)
     
     def _capture_scientist_photo_from_frame(self, frame):
         """Capturează poza și face matching-ul folosind un frame deja capturat."""
@@ -458,37 +459,67 @@ class KioskApp(App):
             
             name = scientist.name
             desc = scientist.description
+            scientist_image_path = scientist.image_path or ""
             
             self.scientist_photo_path = output_path
             self.scientist_status_text = "Atinge butonul pentru a face o poză și a găsi un om de știință."
-            self._show_scientist_result_popup(name, desc, output_path)
+            self._show_scientist_result_popup(name, desc, output_path, scientist_image_path)
         except Exception as exc:
             self._show_scientist_error_popup(f"Eroare la procesarea imaginii: {exc}")
     
-    def _show_scientist_result_popup(self, name: str, desc: str, photo_path: str):
-        """Afișează rezultatul matching-ului într-un popup."""
-        content = BoxLayout(orientation="vertical", padding=16, spacing=12)
+    def _show_scientist_result_popup(self, name: str, desc: str, photo_path: str, scientist_image_path: str = ""):
+        """Afișează rezultatul matching-ului într-un popup cu imaginea omului de știință."""
+        content = BoxLayout(orientation="horizontal", padding=16, spacing=12)
+        
+        # Layout pentru text
+        text_layout = BoxLayout(orientation="vertical", spacing=12, size_hint_x=0.6)
         
         message = Label(
-            text=f"Semeni cu {name}!\n\n{desc}\n\nPoza ta cu casca este gata!",
-            font_size="22sp",
+            text=f"Semeni cu {name}!\n\n{desc}\n\n",
+            font_size="20sp",
             bold=True,
             halign="center",
             valign="middle",
-            text_size=(450, None),
+            text_size=(None, None),
         )
+        text_layout.add_widget(message)
+        
         ok_btn = Button(
             text="OK",
             size_hint_y=None,
             height=48,
         )
-        content.add_widget(message)
-        content.add_widget(ok_btn)
+        text_layout.add_widget(ok_btn)
+        
+        # Layout pentru imagine
+        image_layout = BoxLayout(orientation="vertical", size_hint_x=0.4)
+        
+        # Afișează imaginea omului de știință dacă există
+        if scientist_image_path and os.path.exists(scientist_image_path):
+            scientist_image = Image(
+                source=scientist_image_path,
+                allow_stretch=True,
+                keep_ratio=True,
+                size_hint=(1, 1)
+            )
+            image_layout.add_widget(scientist_image)
+        else:
+            # Placeholder dacă nu există imagine
+            placeholder = Label(
+                text="Imagine\nom de știință",
+                font_size="16sp",
+                halign="center",
+                valign="middle",
+            )
+            image_layout.add_widget(placeholder)
+        
+        content.add_widget(text_layout)
+        content.add_widget(image_layout)
         
         popup = Popup(
             title="Rezultat",
             content=content,
-            size_hint=(0.7, 0.5),
+            size_hint=(0.8, 0.6),
             auto_dismiss=True,
             pos_hint={'center_x': 0.5, 'center_y': 0.5}
         )

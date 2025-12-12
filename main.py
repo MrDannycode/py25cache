@@ -437,8 +437,8 @@ class KioskApp(App):
             self.scientist_status_text = f"Eroare la deschiderea pozei: {exc}"
     
     def _start_scientist_camera_feed(self):
-        """Pornește feed-ul live al camerei pentru ecranul scientist."""
-        if hasattr(self, '_scientist_camera_timer') and self._scientist_camera_timer:
+        """Pornește feed-ul live al camerei pentru ecranul scientist într-un popup."""
+        if hasattr(self, '_scientist_camera_popup') and self._scientist_camera_popup:
             return  # Deja pornit
         
         # Creează un fișier temporar pentru feed
@@ -447,14 +447,74 @@ class KioskApp(App):
         self._scientist_camera_temp_file.close()
         self.scientist_camera_feed = self._scientist_camera_temp_path
         
+        # Creează popup-ul cu feed-ul camerei
+        content = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        
+        # Imaginea feed-ului camerei
+        camera_image = Image(
+            source=self.scientist_camera_feed if self.scientist_camera_feed else "",
+            allow_stretch=True,
+            keep_ratio=True,
+            size_hint=(1, 0.9)
+        )
+        content.add_widget(camera_image)
+        
+        # Buton de închidere
+        close_btn = Button(
+            text="Închide camera",
+            size_hint_y=None,
+            height=48,
+            font_size="18sp"
+        )
+        content.add_widget(close_btn)
+        
+        # Creează popup-ul
+        popup = Popup(
+            title="Camera live",
+            content=content,
+            size_hint=(0.7, 0.6),
+            auto_dismiss=False,
+        )
+        
+        # Funcție pentru a închide popup-ul și a opri feed-ul
+        def close_camera_feed(instance):
+            popup.dismiss()
+            self._stop_scientist_camera_feed()
+        
+        # Butonul de închidere închide popup-ul și oprește feed-ul
+        close_btn.bind(on_press=close_camera_feed)
+        
+        # Când popup-ul este închis, oprește feed-ul
+        popup.bind(on_dismiss=lambda instance: self._stop_scientist_camera_feed())
+        
+        # Salvează referințele
+        self._scientist_camera_popup = popup
+        self._scientist_camera_image = camera_image
+        
+        # Deschide popup-ul
+        popup.open()
+        
         # Pornește actualizarea feed-ului
         self._scientist_camera_timer = Clock.schedule_interval(self._update_scientist_camera_feed, 0.1)  # 10 FPS
     
     def _stop_scientist_camera_feed(self):
-        """Oprește feed-ul live al camerei."""
+        """Oprește feed-ul live al camerei și închide popup-ul."""
+        # Oprește timer-ul
         if hasattr(self, '_scientist_camera_timer') and self._scientist_camera_timer:
             self._scientist_camera_timer.cancel()
             self._scientist_camera_timer = None
+        
+        # Închide popup-ul
+        if hasattr(self, '_scientist_camera_popup') and self._scientist_camera_popup:
+            try:
+                self._scientist_camera_popup.dismiss()
+            except:
+                pass
+            self._scientist_camera_popup = None
+        
+        # Șterge referințele
+        if hasattr(self, '_scientist_camera_image'):
+            self._scientist_camera_image = None
         
         # Șterge fișierul temporar
         if hasattr(self, '_scientist_camera_temp_path') and os.path.exists(self._scientist_camera_temp_path):
@@ -468,12 +528,21 @@ class KioskApp(App):
     def _update_scientist_camera_feed(self, dt):
         """Actualizează feed-ul camerei capturând un nou frame."""
         try:
+            # Verifică dacă popup-ul este încă deschis
+            if not hasattr(self, '_scientist_camera_popup') or not self._scientist_camera_popup:
+                return
+            
             frame = self.scientist_matcher._capture_frame_rpicam()
             if frame is not None and hasattr(self, '_scientist_camera_temp_path'):
                 # Salvează frame-ul ca imagine
                 cv2.imwrite(self._scientist_camera_temp_path, frame)
-                # Forțează reîncărcarea în widget
-                self.scientist_camera_feed = self._scientist_camera_temp_path
+                # Actualizează imaginea în popup
+                if hasattr(self, '_scientist_camera_image') and self._scientist_camera_image:
+                    self._scientist_camera_image.source = self._scientist_camera_temp_path
+                    try:
+                        self._scientist_camera_image.reload()
+                    except:
+                        pass
         except Exception as e:
             # Ignoră erorile pentru a nu întrerupe feed-ul
             pass

@@ -103,15 +103,24 @@ class ScientistMatcher:
         
         return frame_copy
 
-    def _capture_frame_rpicam(self) -> Optional[np.ndarray]:
+    def _capture_frame_rpicam(self, output_path: Optional[str] = None) -> Optional[np.ndarray]:
         """
         Capturează un frame folosind rpicam-hello cu timeout scurt.
         Returnează imaginea ca numpy array (BGR pentru OpenCV).
+        
+        Args:
+            output_path: Dacă este specificat, salvează direct la acest path (pentru feed live).
+                        Dacă este None, creează un fișier temporar care va fi șters.
         """
-        # Creează un fișier temporar pentru imagine
-        temp_file = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
-        temp_path = temp_file.name
-        temp_file.close()
+        # Dacă nu este specificat un output_path, creează un fișier temporar
+        if output_path is None:
+            temp_file = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+            temp_path = temp_file.name
+            temp_file.close()
+            should_delete = True
+        else:
+            temp_path = output_path
+            should_delete = False
         
         try:
             # Rulează rpicam-hello cu timeout de 1 secundă pentru captură rapidă
@@ -148,17 +157,17 @@ class ScientistMatcher:
                         timeout=3
                     )
                     if result.returncode != 0:
-                        raise RuntimeError(f"rpicam-vid a eșuat: {result.stderr}")
+                        return None
                 except FileNotFoundError:
-                    raise RuntimeError(f"rpicam-hello a eșuat: {result.stderr}")
+                    return None
             
             # Citește imaginea capturată
             if not os.path.exists(temp_path):
-                raise RuntimeError("Fișierul capturat nu există.")
+                return None
             
             frame = cv2.imread(temp_path)
             if frame is None:
-                raise RuntimeError("Nu am putut citi imaginea capturată.")
+                return None
             
             return frame
             
@@ -169,8 +178,8 @@ class ScientistMatcher:
             # Pentru feed live, nu aruncăm eroare, doar returnăm None
             return None
         finally:
-            # Șterge fișierul temporar
-            if os.path.exists(temp_path):
+            # Șterge fișierul temporar doar dacă nu este pentru feed live
+            if should_delete and os.path.exists(temp_path):
                 try:
                     os.unlink(temp_path)
                 except:

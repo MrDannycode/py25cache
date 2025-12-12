@@ -446,13 +446,19 @@ class KioskApp(App):
         self._scientist_camera_temp_path = self._scientist_camera_temp_file.name
         self._scientist_camera_temp_file.close()
         
-        # Face o captură inițială pentru a avea ceva de afișat
+        # Face o captură inițială pentru a avea ceva de afișat (folosind fișierul persistent)
         try:
-            initial_frame = self.scientist_matcher._capture_frame_rpicam()
-            if initial_frame is not None:
-                cv2.imwrite(self._scientist_camera_temp_path, initial_frame)
+            initial_frame = self.scientist_matcher._capture_frame_rpicam(output_path=self._scientist_camera_temp_path)
+            if initial_frame is None:
+                # Creează o imagine neagră placeholder dacă captura eșuează
+                import numpy as np
+                placeholder = np.zeros((480, 640, 3), dtype=np.uint8)
+                cv2.imwrite(self._scientist_camera_temp_path, placeholder)
         except:
-            pass
+            # Creează o imagine neagră placeholder dacă nu se poate captura
+            import numpy as np
+            placeholder = np.zeros((480, 640, 3), dtype=np.uint8)
+            cv2.imwrite(self._scientist_camera_temp_path, placeholder)
         
         self.scientist_camera_feed = self._scientist_camera_temp_path
         
@@ -562,7 +568,8 @@ class KioskApp(App):
             if not hasattr(self, '_scientist_camera_temp_path'):
                 return
             
-            frame = self.scientist_matcher._capture_frame_rpicam()
+            # Folosește fișierul persistent pentru feed live
+            frame = self.scientist_matcher._capture_frame_rpicam(output_path=self._scientist_camera_temp_path)
             if frame is not None:
                 # Salvează frame-ul ca imagine
                 success = cv2.imwrite(self._scientist_camera_temp_path, frame)

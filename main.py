@@ -464,7 +464,7 @@ class KioskApp(App):
             source=self._scientist_camera_temp_path,
             allow_stretch=True,
             keep_ratio=True,
-            size_hint=(1, 0.9)
+            size_hint=(1, 0.85)
         )
         content.add_widget(camera_image)
         
@@ -472,17 +472,18 @@ class KioskApp(App):
         close_btn = Button(
             text="Închide camera",
             size_hint_y=None,
-            height=48,
-            font_size="18sp"
+            height=50,
+            font_size="20sp"
         )
         content.add_widget(close_btn)
         
-        # Creează popup-ul
+        # Creează popup-ul centrat
         popup = Popup(
             title="Camera live",
             content=content,
-            size_hint=(0.7, 0.6),
+            size_hint=(0.7, 0.7),
             auto_dismiss=False,
+            pos_hint={'center_x': 0.5, 'center_y': 0.5}
         )
         
         # Funcție pentru a închide popup-ul și a opri feed-ul

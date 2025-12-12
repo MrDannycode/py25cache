@@ -99,6 +99,8 @@
 ScreenManager:
     id: screen_manager
     transition: FadeTransition(duration=0.5)
+    ScreensaverScreen:
+        name: "screensaver"
     HomeScreen:
         name: "home"
     InfoScreen:
@@ -113,6 +115,34 @@ ScreenManager:
         name: "maze"
     CircuitGameScreen:
         name: "circuit"
+
+
+<ScreensaverScreen>:
+    BoxLayout:
+        orientation: "vertical"
+        
+        canvas.before:
+            Color:
+                rgba: 0, 0, 0, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        
+        Image:
+            id: screensaver_image
+            source: ""
+            allow_stretch: True
+            keep_ratio: True
+            size_hint: 1, 0.9
+        
+        Label:
+            text: "Atinge ecranul pentru a continua"
+            font_size: "24sp"
+            color: 1, 1, 1, 0.8
+            size_hint_y: 0.1
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
 
 
 <HomeScreen>:

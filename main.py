@@ -13,11 +13,13 @@ from kivy.app import App
 from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.properties import BooleanProperty, ListProperty, StringProperty
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
+from kivy.uix.image import Image
+from pathlib import Path
 
 from modules.personality_test import PersonalityTest
 from modules.scientist_matcher import ScientistMatcher
@@ -28,6 +30,64 @@ from modules.circuit_canvas import CircuitCanvas
 
 
 # --- Screen-uri de bază ---
+
+class ScreensaverScreen(Screen):
+    """Ecran de screensaver cu prezentarea."""
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.image_paths = []
+        self.current_image_index = 0
+        self.slide_timer = None
+        self._load_images()
+    
+    def _load_images(self):
+        """Încarcă imaginile din folderul prezentare."""
+        prezentare_dir = Path("assets/images/prezentare")
+        if prezentare_dir.exists():
+            # Sortează imaginile după nume pentru ordine corectă
+            self.image_paths = sorted(prezentare_dir.glob("*.png"))
+            self.image_paths.extend(sorted(prezentare_dir.glob("*.jpg")))
+            self.image_paths.extend(sorted(prezentare_dir.glob("*.jpeg")))
+    
+    def on_enter(self):
+        """Când intră pe ecran, pornește slideshow-ul."""
+        if self.image_paths:
+            self._show_current_image()
+            # Schimbă imaginea la fiecare 5 secunde
+            self.slide_timer = Clock.schedule_interval(self._next_image, 5.0)
+    
+    def on_leave(self):
+        """Când părăsește ecranul, oprește timer-ul."""
+        if self.slide_timer:
+            self.slide_timer.cancel()
+            self.slide_timer = None
+    
+    def _show_current_image(self):
+        """Afișează imaginea curentă."""
+        if not self.image_paths:
+            return
+        
+        image_path = self.image_paths[self.current_image_index]
+        # Actualizează imaginea în widget
+        if hasattr(self, 'ids') and 'screensaver_image' in self.ids:
+            self.ids.screensaver_image.source = str(image_path)
+            self.ids.screensaver_image.reload()
+    
+    def _next_image(self, dt):
+        """Trece la următoarea imagine."""
+        if not self.image_paths:
+            return
+        
+        self.current_image_index = (self.current_image_index + 1) % len(self.image_paths)
+        self._show_current_image()
+    
+    def on_touch_down(self, touch):
+        """La click sau touch, trece la ecranul principal."""
+        app = App.get_running_app()
+        if app and app.root:
+            app.root.current = "home"
+        return True
 
 class HomeScreen(Screen):
     """Ecranul principal, cu butoanele pentru toate modulele."""

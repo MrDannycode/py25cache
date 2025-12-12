@@ -455,15 +455,23 @@ class KioskApp(App):
         try:
             initial_frame = self.scientist_matcher._capture_frame_rpicam(output_path=self._scientist_camera_temp_path)
             if initial_frame is None:
-                # Creează o imagine neagră placeholder dacă captura eșuează
-                import numpy as np
-                placeholder = np.zeros((480, 640, 3), dtype=np.uint8)
-                cv2.imwrite(self._scientist_camera_temp_path, placeholder)
-        except:
+                # Verifică dacă fișierul a fost creat de rpicam-hello chiar dacă frame este None
+                if not os.path.exists(self._scientist_camera_temp_path) or os.path.getsize(self._scientist_camera_temp_path) == 0:
+                    # Creează o imagine neagră placeholder dacă captura eșuează
+                    import numpy as np
+                    placeholder = np.zeros((480, 640, 3), dtype=np.uint8)
+                    cv2.imwrite(self._scientist_camera_temp_path, placeholder)
+                    print(f"[DEBUG] Placeholder creat la: {self._scientist_camera_temp_path}")
+                else:
+                    print(f"[DEBUG] Fișierul există și are {os.path.getsize(self._scientist_camera_temp_path)} bytes")
+            else:
+                print(f"[DEBUG] Captură inițială reușită, frame shape: {initial_frame.shape}")
+        except Exception as e:
             # Creează o imagine neagră placeholder dacă nu se poate captura
             import numpy as np
             placeholder = np.zeros((480, 640, 3), dtype=np.uint8)
             cv2.imwrite(self._scientist_camera_temp_path, placeholder)
+            print(f"[DEBUG] Eroare la captură inițială: {e}, placeholder creat")
         
         self.scientist_camera_feed = self._scientist_camera_temp_path
         
@@ -519,15 +527,19 @@ class KioskApp(App):
         def force_reload_image(dt):
             if hasattr(self, '_scientist_camera_image') and self._scientist_camera_image:
                 try:
-                    self._scientist_camera_image.source = self._scientist_camera_temp_path
-                    self._scientist_camera_image.reload()
-                    print(f"[DEBUG] Forțat reîncărcarea imaginii: {self._scientist_camera_temp_path}")
+                    # Verifică dacă fișierul există și are conținut
+                    if os.path.exists(self._scientist_camera_temp_path) and os.path.getsize(self._scientist_camera_temp_path) > 0:
+                        self._scientist_camera_image.source = self._scientist_camera_temp_path
+                        self._scientist_camera_image.reload()
+                        print(f"[DEBUG] Forțat reîncărcarea imaginii: {self._scientist_camera_temp_path}, size: {os.path.getsize(self._scientist_camera_temp_path)}")
+                    else:
+                        print(f"[DEBUG] Fișierul nu există sau este gol la forțarea reîncărcării: {self._scientist_camera_temp_path}")
                 except Exception as e:
                     print(f"[DEBUG] Eroare la forțarea reîncărcării: {e}")
         
         # Face o captură inițială după ce popup-ul este deschis
-        Clock.schedule_once(force_reload_image, 0.1)
-        Clock.schedule_once(lambda dt: self._update_scientist_camera_feed(0), 0.3)
+        Clock.schedule_once(force_reload_image, 0.2)
+        Clock.schedule_once(lambda dt: self._update_scientist_camera_feed(0), 0.5)
         
         # Pornește actualizarea feed-ului cu interval mai mare pentru a evita timeout-urile
         self._scientist_camera_timer = Clock.schedule_interval(self._update_scientist_camera_feed, 0.5)  # 2 FPS pentru a evita timeout-urile
@@ -577,18 +589,26 @@ class KioskApp(App):
             # _capture_frame_rpicam salvează direct la output_path, deci nu mai trebuie cv2.imwrite
             frame = self.scientist_matcher._capture_frame_rpicam(output_path=self._scientist_camera_temp_path)
             
-            # Verifică dacă fișierul există (chiar dacă frame este None, fișierul ar putea fi creat)
-            if os.path.exists(self._scientist_camera_temp_path):
-                # Actualizează imaginea în popup - nu folosim timestamp pentru fișiere locale
-                # Doar reîncărcăm direct
-                if self._scientist_camera_image.source != self._scientist_camera_temp_path:
+            # Verifică dacă fișierul există și are conținut
+            if os.path.exists(self._scientist_camera_temp_path) and os.path.getsize(self._scientist_camera_temp_path) > 0:
+                # Verifică dacă sursa trebuie actualizată
+                current_source = self._scientist_camera_image.source
+                if current_source != self._scientist_camera_temp_path:
+                    # Setează sursa pentru prima dată
+                    self._scientist_camera_image.source = self._scientist_camera_temp_path
+                    print(f"[DEBUG] Sursa setată la: {self._scientist_camera_temp_path}")
+                else:
+                    # Forțează reîncărcarea setând sursa din nou
+                    self._scientist_camera_image.source = ""
                     self._scientist_camera_image.source = self._scientist_camera_temp_path
                 
                 # Forțează reîncărcarea
                 try:
                     self._scientist_camera_image.reload()
-                except:
-                    pass
+                except Exception as reload_err:
+                    print(f"[DEBUG] Eroare la reload: {reload_err}")
+            else:
+                print(f"[DEBUG] Fișierul nu există sau este gol: {self._scientist_camera_temp_path}")
         except Exception as e:
             # Afișează eroarea pentru debugging
             print(f"[DEBUG] Eroare la actualizarea feed-ului: {e}")

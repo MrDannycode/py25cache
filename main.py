@@ -490,14 +490,41 @@ class KioskApp(App):
             self.maze_status_text = "Găsește ieșirea!"
 
     def _show_maze_win_popup(self):
+        # Listă de curiozități despre lume
+        curiosities = [
+            "Știai că o meduză este compusă din 95% apă?",
+            "Știai că melcii pot dormi până la 3 ani consecutiv?",
+            "Știai că inima unei balene albastre este atât de mare încât un om ar putea înota prin arterele sale?",
+            "Știai că există mai multe stele în univers decât granule de nisip pe toate plajele Pământului?",
+            "Știai că bananele sunt în realitate bace și nu fructe?",
+            "Știai că un fulg de zăpadă poate avea până la 200 de fețe diferite?",
+            "Știai că păianjenii pot mânca mai mult decât toate oamenii de pe Pământ combinat?",
+            "Știai că oamenii și delfinii sunt singurele animale care fac sex pentru plăcere?",
+            "Știai că există mai multe tipuri de bacterii în corpul tău decât celule umane?",
+            "Știai că un cub de gheață de 1 metru cub cântărește aproape o tonă?",
+            "Știai că lumina de la Soare călătorește 8 minute până la Pământ?",
+            "Știai că există mai multe combinații posibile de șah decât atomi în universul observabil?",
+            "Știai că o albină trebuie să viziteze 2 milioane de flori pentru a produce 500g de miere?",
+            "Știai că un crocodil nu poate scoate limba din gură?",
+            "Știai că există mai mult aur în oceane decât a fost extras vreodată de pe uscat?",
+            "Știai că un păianjen poate trăi până la 2 ani fără mâncare?",
+            "Știai că oamenii au mai multe bacterii în gură decât oameni pe Pământ?",
+            "Știai că un fulger este de 5 ori mai fierbinte decât suprafața Soarelui?",
+            "Știai că există mai multe copaci pe Pământ decât stele în galaxia noastră?",
+            "Știai că o meduză nu are creier, inimă sau oase?",
+        ]
+        
+        # Alege o curiozitate random
+        curiosity = random.choice(curiosities)
+        
         content = BoxLayout(orientation="vertical", padding=16, spacing=12)
         message = Label(
-            text="Felicitări! Ai găsit ieșirea din labirint!",
-            font_size="24sp",
+            text=curiosity,
+            font_size="22sp",
             bold=True,
             halign="center",
             valign="middle",
-            text_size=(400, None),
+            text_size=(450, None),
         )
         ok_btn = Button(
             text="OK",
@@ -507,9 +534,9 @@ class KioskApp(App):
         content.add_widget(message)
         content.add_widget(ok_btn)
         popup = Popup(
-            title="Ai câștigat!",
+            title="Curiozitate despre lume",
             content=content,
-            size_hint=(0.65, 0.45),
+            size_hint=(0.7, 0.5),
             auto_dismiss=True,
         )
         ok_btn.bind(on_press=popup.dismiss)

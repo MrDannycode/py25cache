@@ -537,54 +537,17 @@ ScreenManager:
             spacing: dp(12)
 
             Label:
-                text: "Legende: pereți = blocuri întunecate | ★ ieșire | 🙂 tu"
+                text: "Legende: pereți = blocuri întunecate | 🧠 creier | 🖼️ Einstein"
                 font_size: "16sp"
                 halign: "left"
                 valign: "middle"
                 text_size: self.size
             Label:
-                text: "Glisează pe hartă sau folosește săgețile"
+                text: "Glisează pe hartă pentru a naviga"
                 font_size: "16sp"
                 halign: "right"
                 valign: "middle"
                 text_size: self.size
-
-        GridLayout:
-            cols: 3
-            spacing: dp(12)
-            size_hint_y: 0.16
-
-            Widget:
-            Button:
-                text: "↑"
-                font_size: "26sp"
-                background_color: 0.16, 0.45, 0.40, 1
-                background_normal: ''
-                on_press: app.move_maze("up")
-            Widget:
-
-            Button:
-                text: "←"
-                font_size: "26sp"
-                background_color: 0.16, 0.45, 0.40, 1
-                background_normal: ''
-                on_press: app.move_maze("left")
-            Widget:
-            Button:
-                text: "→"
-                font_size: "26sp"
-                background_color: 0.16, 0.45, 0.40, 1
-                background_normal: ''
-                on_press: app.move_maze("right")
-
-            Widget:
-            Button:
-                text: "↓"
-                font_size: "26sp"
-                background_color: 0.16, 0.45, 0.40, 1
-                background_normal: ''
-                on_press: app.move_maze("down")
-            Widget:
 
         BoxLayout:
             size_hint_y: 0.14

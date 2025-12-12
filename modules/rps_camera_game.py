@@ -67,7 +67,7 @@ class RPSCameraGame:
 
     def _capture_frame_rpicam(self) -> np.ndarray:
         """
-        Capturează un frame folosind rpicam-hello --timeout 0.
+        Capturează un frame folosind rpicam-still pentru captură statică.
         Returnează imaginea ca numpy array (BGR pentru OpenCV).
         """
         temp_file = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
@@ -75,21 +75,35 @@ class RPSCameraGame:
         temp_file.close()
         
         try:
+            # Șterge fișierul dacă există pentru a forța o captură nouă
+            if os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
+            
             cmd = [
-                "rpicam-hello",
-                "--timeout", "0",
-                "--output", temp_path
+                "rpicam-still",
+                "--timeout", "1000",  # 1 secundă
+                "--output", temp_path,
+                "--width", "640",
+                "--height", "480",
+                "--nopreview"
             ]
             
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=15
+                timeout=5
             )
             
-            if result.returncode != 0:
-                raise RuntimeError(f"rpicam-hello a eșuat: {result.stderr}")
+            # Așteaptă puțin pentru a se asigura că fișierul este scris complet
+            time.sleep(0.2)
+            
+            # Verifică dacă fișierul a fost creat chiar dacă returncode nu este 0
+            if not os.path.exists(temp_path) or os.path.getsize(temp_path) == 0:
+                raise RuntimeError(f"rpicam-still nu a creat fișierul sau este gol. stderr: {result.stderr}")
             
             frame = cv2.imread(temp_path)
             if frame is None:
@@ -97,6 +111,10 @@ class RPSCameraGame:
             
             return frame
             
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("Timeout la capturarea frame-ului cu rpicam-still.")
+        except Exception as e:
+            raise RuntimeError(f"Eroare la capturarea frame-ului: {e}")
         finally:
             if os.path.exists(temp_path):
                 try:

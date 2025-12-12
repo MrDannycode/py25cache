@@ -819,16 +819,29 @@ class KioskApp(App):
     
     def _capture_rps_move(self, dt):
         """Capturează mutarea după timer pentru 2 jucători."""
+        print("[DEBUG] _capture_rps_move apelat")
         try:
+            self.rps_status_text = "Capturez gestul... te rog așteaptă."
             outcome = self.rps_game.play_round_two_players(camera_index=self.camera_index)
+            print(f"[DEBUG] Outcome primit: {outcome}")
         except Exception as exc:
+            import traceback
+            print(f"[DEBUG] Eroare în _capture_rps_move: {exc}")
+            traceback.print_exc()
             self.rps_status_text = f"Eroare cameră: {exc}"
+            self.rps_timer_text = ""
+            return
+
+        if not outcome:
+            self.rps_status_text = "Nu am putut detecta gesturile. Încearcă din nou."
             self.rps_timer_text = ""
             return
 
         player1 = outcome.get("player1_move", "necunoscut")
         player2 = outcome.get("player2_move", "necunoscut")
         result = outcome.get("result", "egal")
+        
+        print(f"[DEBUG] Player1: {player1}, Player2: {player2}, Result: {result}")
         
         # Mesaje personalizate pentru 2 jucători
         if result == "player1_wins":

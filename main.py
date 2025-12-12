@@ -828,13 +828,15 @@ class KioskApp(App):
             import traceback
             print(f"[DEBUG] Eroare în _capture_rps_move: {exc}")
             traceback.print_exc()
-            self.rps_status_text = f"Eroare cameră: {exc}"
+            self._show_rps_error_popup(f"Eroare cameră: {exc}")
             self.rps_timer_text = ""
+            self.rps_status_text = "Atinge «Joacă o rundă» și arată un gest către cameră."
             return
 
         if not outcome:
-            self.rps_status_text = "Nu am putut detecta gesturile. Încearcă din nou."
+            self._show_rps_error_popup("Nu am putut detecta gesturile. Încearcă din nou.")
             self.rps_timer_text = ""
+            self.rps_status_text = "Atinge «Joacă o rundă» și arată un gest către cameră."
             return
 
         player1 = outcome.get("player1_move", "necunoscut")
@@ -843,15 +845,79 @@ class KioskApp(App):
         
         print(f"[DEBUG] Player1: {player1}, Player2: {player2}, Result: {result}")
         
+        # Resetează statusul și timer-ul
+        self.rps_timer_text = ""
+        self.rps_status_text = "Atinge «Joacă o rundă» și arată un gest către cameră."
+        
+        # Afișează rezultatul în popup
+        self._show_rps_result_popup(player1, player2, result)
+    
+    def _show_rps_result_popup(self, player1_move: str, player2_move: str, result: str):
+        """Afișează rezultatul jocului într-un popup."""
+        content = BoxLayout(orientation="vertical", padding=16, spacing=12)
+        
         # Mesaje personalizate pentru 2 jucători
         if result == "player1_wins":
-            self.rps_status_text = f"Felicitări, ești mai bun decât un Intel i5!\\n\\nJucător 1: {player1} | Jucător 2: {player2}\\nJucătorul 1 câștigă!"
+            message_text = f"Felicitări, ești mai bun decât un Intel i5!\n\nJucător 1: {player1_move} | Jucător 2: {player2_move}\n\nJucătorul 1 câștigă!"
         elif result == "player2_wins":
-            self.rps_status_text = f"Haha, până și un Pentium e mai bun ca tine!\\n\\nJucător 1: {player1} | Jucător 2: {player2}\\nJucătorul 2 câștigă!"
+            message_text = f"Haha, până și un Pentium e mai bun ca tine!\n\nJucător 1: {player1_move} | Jucător 2: {player2_move}\n\nJucătorul 2 câștigă!"
         else:
-            self.rps_status_text = f"Egal!\\n\\nJucător 1: {player1} | Jucător 2: {player2}"
+            message_text = f"Egal!\n\nJucător 1: {player1_move} | Jucător 2: {player2_move}"
         
-        self.rps_timer_text = ""
+        message = Label(
+            text=message_text,
+            font_size="22sp",
+            bold=True,
+            halign="center",
+            valign="middle",
+            text_size=(450, None),
+        )
+        ok_btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=48,
+        )
+        content.add_widget(message)
+        content.add_widget(ok_btn)
+        
+        popup = Popup(
+            title="Rezultat",
+            content=content,
+            size_hint=(0.7, 0.5),
+            auto_dismiss=True,
+            pos_hint={'center_x': 0.5, 'center_y': 0.5}
+        )
+        ok_btn.bind(on_press=popup.dismiss)
+        popup.open()
+    
+    def _show_rps_error_popup(self, error_message: str):
+        """Afișează o eroare într-un popup."""
+        content = BoxLayout(orientation="vertical", padding=16, spacing=12)
+        
+        message = Label(
+            text=error_message,
+            font_size="20sp",
+            halign="center",
+            valign="middle",
+            text_size=(450, None),
+        )
+        ok_btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=48,
+        )
+        content.add_widget(message)
+        content.add_widget(ok_btn)
+        
+        popup = Popup(
+            title="Eroare",
+            content=content,
+            size_hint=(0.7, 0.4),
+            auto_dismiss=True,
+            pos_hint={'center_x': 0.5, 'center_y': 0.5}
+        )
+        ok_btn.bind(on_press=popup.dismiss)
+        popup.open()
 
     # --- Labirint ---
     def _reset_maze(self):

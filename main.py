@@ -499,7 +499,6 @@ class KioskApp(App):
             "Știai că bananele sunt în realitate bace și nu fructe?",
             "Știai că un fulg de zăpadă poate avea până la 200 de fețe diferite?",
             "Știai că păianjenii pot mânca mai mult decât toate oamenii de pe Pământ combinat?",
-            "Știai că oamenii și delfinii sunt singurele animale care fac sex pentru plăcere?",
             "Știai că există mai multe tipuri de bacterii în corpul tău decât celule umane?",
             "Știai că un cub de gheață de 1 metru cub cântărește aproape o tonă?",
             "Știai că lumina de la Soare călătorește 8 minute până la Pământ?",

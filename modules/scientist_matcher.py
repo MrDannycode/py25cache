@@ -135,14 +135,25 @@ class ScientistMatcher:
                 "--nopreview"  # Oprește fereastra de preview
             ]
             
+            print(f"[DEBUG] Rulez comanda: {' '.join(cmd)}")
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=3  # Timeout mai scurt pentru subprocess
+                timeout=5  # Timeout mai mare pentru a permite capturarea
             )
             
-            if result.returncode != 0:
+            print(f"[DEBUG] rpicam-hello returncode: {result.returncode}")
+            if result.stdout:
+                print(f"[DEBUG] rpicam-hello stdout: {result.stdout[:200]}")
+            if result.stderr:
+                print(f"[DEBUG] rpicam-hello stderr: {result.stderr[:200]}")
+            
+            # Verifică dacă fișierul a fost creat chiar dacă returncode nu este 0
+            file_exists = os.path.exists(temp_path) and os.path.getsize(temp_path) > 0
+            print(f"[DEBUG] Fișierul există: {os.path.exists(temp_path)}, size: {os.path.getsize(temp_path) if os.path.exists(temp_path) else 0}")
+            
+            if result.returncode != 0 and not file_exists:
                 # Dacă eșuează, încearcă cu rpicam-vid pentru o captură mai rapidă
                 try:
                     cmd_vid = [
@@ -166,12 +177,20 @@ class ScientistMatcher:
             
             # Citește imaginea capturată
             if not os.path.exists(temp_path):
+                print(f"[DEBUG] Fișierul {temp_path} nu există după rpicam-hello")
+                return None
+            
+            file_size = os.path.getsize(temp_path)
+            if file_size == 0:
+                print(f"[DEBUG] Fișierul {temp_path} este gol (0 bytes)")
                 return None
             
             frame = cv2.imread(temp_path)
             if frame is None:
+                print(f"[DEBUG] Nu am putut citi imaginea de la {temp_path} (size: {file_size} bytes)")
                 return None
             
+            print(f"[DEBUG] Frame capturat cu succes: {temp_path}, size: {file_size}, shape: {frame.shape}")
             return frame
             
         except subprocess.TimeoutExpired:

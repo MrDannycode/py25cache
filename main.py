@@ -3,6 +3,7 @@ import random
 import webbrowser
 import tempfile
 import cv2
+from datetime import datetime
 
 from kivy.config import Config
 
@@ -427,6 +428,40 @@ class KioskApp(App):
         
         self.scientist_photo_path = photo_path
         self.scientist_status_text = f"Semeni cu {name}!\\n{desc}\\n\\nPoza ta cu casca este gata! Poți o descărca mai jos."
+    
+    def _capture_scientist_photo_from_frame(self, frame):
+        """Capturează poza și face matching-ul folosind un frame deja capturat."""
+        self.scientist_status_text = "Procesez imaginea..."
+        self.scientist_photo_path = ""
+        try:
+            # Detectează fața în frame
+            faces = self.scientist_matcher._detect_face(frame)
+            if len(faces) == 0:
+                self.scientist_status_text = "Nu am putut detecta o față. Încearcă din nou."
+                return
+            
+            # Alege prima față detectată
+            face = faces[0]
+            
+            # Adaugă casca pe față
+            edited_frame = self.scientist_matcher._add_helmet_to_face(frame, face)
+            
+            # Salvează poza editată
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_filename = f"scientist_match_{timestamp}.jpg"
+            output_path = os.path.join(self.scientist_matcher.output_dir, output_filename)
+            cv2.imwrite(output_path, edited_frame)
+            
+            # Alege un om de știință random (sau poți implementa logica de matching)
+            scientist = random.choice(self.scientist_matcher.scientists)
+            
+            name = scientist.name
+            desc = scientist.description
+            
+            self.scientist_photo_path = output_path
+            self.scientist_status_text = f"Semeni cu {name}!\\n{desc}\\n\\nPoza ta cu casca este gata! Poți o descărca mai jos."
+        except Exception as exc:
+            self.scientist_status_text = f"Eroare la procesarea imaginii: {exc}"
 
     def download_scientist_photo(self):
         """Deschide poza în aplicația default sau copiază în clipboard."""
@@ -527,8 +562,19 @@ class KioskApp(App):
                 self._scientist_camera_timer.cancel()
                 self._scientist_camera_timer = None
             
-            # Capturează poza și face matching-ul
-            self._capture_scientist_photo()
+            # Folosește frame-ul deja capturat din feed-ul live
+            if hasattr(self, '_scientist_camera_temp_path') and os.path.exists(self._scientist_camera_temp_path):
+                # Citește frame-ul din fișierul temporar
+                frame = cv2.imread(self._scientist_camera_temp_path)
+                if frame is not None:
+                    # Face matching-ul direct cu frame-ul din feed
+                    self._capture_scientist_photo_from_frame(frame)
+                else:
+                    # Dacă nu poate citi frame-ul, face o captură nouă
+                    self._capture_scientist_photo()
+            else:
+                # Dacă nu există frame, face o captură nouă
+                self._capture_scientist_photo()
             
             # Închide popup-ul după captură
             popup.dismiss()

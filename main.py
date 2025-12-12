@@ -486,6 +486,7 @@ class KioskApp(App):
             self._show_maze_win_popup()
         elif status == "block":
             self.maze_status_text = "Perete! Încearcă altă direcție."
+            self._show_maze_wall_popup()
         else:
             self.maze_status_text = "Găsește ieșirea!"
 
@@ -540,6 +541,30 @@ class KioskApp(App):
         )
         ok_btn.bind(on_press=popup.dismiss)
         popup.open()
+
+    def _show_maze_wall_popup(self):
+        """Afișează popup cu imaginea lui Einstein când jucătorul se lovește de perete."""
+        content = BoxLayout(orientation="vertical", padding=16, spacing=12)
+        
+        # Imaginea lui Einstein
+        einstein_img = Image(
+            source='assets/images/Albert_Einstein_sticks_his_tongue.jpg',
+            allow_stretch=True,
+            keep_ratio=True,
+            size_hint=(1, 0.8)
+        )
+        content.add_widget(einstein_img)
+        
+        popup = Popup(
+            title="",
+            content=content,
+            size_hint=(0.6, 0.6),
+            auto_dismiss=True,
+        )
+        popup.open()
+        
+        # Închide popup-ul automat după 1 secundă
+        Clock.schedule_once(lambda dt: popup.dismiss(), 1.0)
 
     # --- Popup Personalitate ---
     def _show_personality_popup(self, result: dict):

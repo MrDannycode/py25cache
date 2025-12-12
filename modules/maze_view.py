@@ -121,7 +121,7 @@ class MazeView(Widget):
                                     size=(cw // 4, ch // 4)
                                 )
 
-                    # Ieșire (imagine Albert Einstein)
+                    # Ieșire (imagine carte.png)
                     if cell == "E":
                         # Umbră sub imagine
                         Color(0, 0, 0, 0.3)
@@ -130,7 +130,7 @@ class MazeView(Widget):
                             size=(cw * 0.6, ch * 0.2)
                         )
 
-                        # Glow exterior (galben pentru Einstein)
+                        # Glow exterior (galben pentru carte)
                         Color(*self.exit_glow)
                         for i in range(2):
                             alpha = 0.4 - (i * 0.2)
@@ -151,12 +151,12 @@ class MazeView(Widget):
                                 )
                             )
 
-                        # Imaginea Albert Einstein
+                        # Imaginea carte.png
                         Color(1, 1, 1, 1)  # Culoare albă pentru a nu afecta imaginea
                         Rectangle(
                             pos=(x + cw * 0.2, y + ch * 0.2),
                             size=(cw * 0.6, ch * 0.6),
-                            source='assets/images/Albert_Einstein_sticks_his_tongue.jpg'
+                            source='assets/images/carte.png'
                         )
 
                     # Jucător (imagine pngegg.png) cu glow și umbră

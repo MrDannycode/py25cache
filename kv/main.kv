@@ -169,14 +169,32 @@ ScreenManager:
             outline_color: 0, 0, 0, 0.8
             size_hint_y: 0.2
 
-        # Status prezență
-        Label:
-            text: "Apropie-te de ecran pentru a începe" if not app.person_present else "Bun venit! Atinge un buton pentru a explora."
-            font_size: "24sp"
-            color: 1, 1, 1, 1
-            outline_width: 2
-            outline_color: 0, 0, 0, 0.8
+        # Status prezență și buton detectare
+        BoxLayout:
+            orientation: "horizontal"
+            spacing: dp(20)
             size_hint_y: 0.15
+            
+            Label:
+                text: "Apropie-te de ecran pentru a începe" if not app.person_present else "Bun venit! Atinge un buton pentru a explora."
+                font_size: "24sp"
+                color: 1, 1, 1, 1
+                outline_width: 2
+                outline_color: 0, 0, 0, 0.8
+                size_hint_x: 0.7
+                text_size: self.size
+                halign: "left"
+                valign: "middle"
+            
+            Button:
+                text: "Detectare\npersoană"
+                font_size: "18sp"
+                bold: True
+                text_size: self.size
+                halign: "center"
+                valign: "middle"
+                size_hint_x: 0.3
+                on_press: app.toggle_person_detection()
 
         # Butoanele principale - Layout îmbunătățit
         BoxLayout:

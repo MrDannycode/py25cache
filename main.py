@@ -343,6 +343,12 @@ class KioskApp(App):
 
     def _update_presence(self, dt):
         return
+    
+    def toggle_person_detection(self):
+        """Comută starea detectării persoanei."""
+        self.person_present = not self.person_present
+        status = "activată" if self.person_present else "dezactivată"
+        print(f"[DEBUG] Detectare persoană {status}")
 
     # --- Info screen ---
     def open_university_website(self):

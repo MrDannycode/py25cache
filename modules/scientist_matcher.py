@@ -123,6 +123,13 @@ class ScientistMatcher:
             should_delete = False
         
         try:
+            # Șterge fișierul dacă există pentru a forța o captură nouă
+            if os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
+            
             # Rulează rpicam-hello cu timeout de 1 secundă pentru captură rapidă
             # Folosim --timeout 1000 (milisecunde) în loc de 0
             # --nopreview oprește fereastra de preview
@@ -142,6 +149,10 @@ class ScientistMatcher:
                 text=True,
                 timeout=5  # Timeout mai mare pentru a permite capturarea
             )
+            
+            # Așteaptă puțin pentru a se asigura că fișierul este scris complet
+            import time
+            time.sleep(0.1)
             
             print(f"[DEBUG] rpicam-hello returncode: {result.returncode}")
             if result.stdout:

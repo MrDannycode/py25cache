@@ -585,30 +585,42 @@ class KioskApp(App):
             if not hasattr(self, '_scientist_camera_temp_path'):
                 return
             
+            # Salvează dimensiunea veche pentru a verifica dacă s-a actualizat
+            old_size = os.path.getsize(self._scientist_camera_temp_path) if os.path.exists(self._scientist_camera_temp_path) else 0
+            
             # Folosește fișierul persistent pentru feed live
             # _capture_frame_rpicam salvează direct la output_path, deci nu mai trebuie cv2.imwrite
             frame = self.scientist_matcher._capture_frame_rpicam(output_path=self._scientist_camera_temp_path)
             
             # Verifică dacă fișierul există și are conținut
-            if os.path.exists(self._scientist_camera_temp_path) and os.path.getsize(self._scientist_camera_temp_path) > 0:
-                # Verifică dacă sursa trebuie actualizată
-                current_source = self._scientist_camera_image.source
-                if current_source != self._scientist_camera_temp_path:
-                    # Setează sursa pentru prima dată
-                    self._scientist_camera_image.source = self._scientist_camera_temp_path
-                    print(f"[DEBUG] Sursa setată la: {self._scientist_camera_temp_path}")
-                else:
-                    # Forțează reîncărcarea setând sursa din nou
-                    self._scientist_camera_image.source = ""
-                    self._scientist_camera_image.source = self._scientist_camera_temp_path
+            if os.path.exists(self._scientist_camera_temp_path):
+                new_size = os.path.getsize(self._scientist_camera_temp_path)
                 
-                # Forțează reîncărcarea
-                try:
-                    self._scientist_camera_image.reload()
-                except Exception as reload_err:
-                    print(f"[DEBUG] Eroare la reload: {reload_err}")
+                # Verifică dacă fișierul s-a actualizat (nu este placeholder-ul vechi)
+                # Placeholder-ul are ~5427 bytes, o captură reală ar trebui să aibă dimensiune diferită
+                if new_size > 0 and (new_size != old_size or new_size > 10000):
+                    # Verifică dacă sursa trebuie actualizată
+                    current_source = self._scientist_camera_image.source
+                    if current_source != self._scientist_camera_temp_path:
+                        # Setează sursa pentru prima dată
+                        self._scientist_camera_image.source = self._scientist_camera_temp_path
+                        print(f"[DEBUG] Sursa setată la: {self._scientist_camera_temp_path}, size: {new_size}")
+                    else:
+                        # Forțează reîncărcarea setând sursa din nou doar dacă s-a actualizat
+                        if new_size != old_size:
+                            self._scientist_camera_image.source = ""
+                            self._scientist_camera_image.source = self._scientist_camera_temp_path
+                            print(f"[DEBUG] Fișier actualizat: {old_size} -> {new_size} bytes")
+                    
+                    # Forțează reîncărcarea
+                    try:
+                        self._scientist_camera_image.reload()
+                    except Exception as reload_err:
+                        print(f"[DEBUG] Eroare la reload: {reload_err}")
+                else:
+                    print(f"[DEBUG] Fișierul nu s-a actualizat sau este placeholder: size={new_size}, old_size={old_size}")
             else:
-                print(f"[DEBUG] Fișierul nu există sau este gol: {self._scientist_camera_temp_path}")
+                print(f"[DEBUG] Fișierul nu există: {self._scientist_camera_temp_path}")
         except Exception as e:
             # Afișează eroarea pentru debugging
             print(f"[DEBUG] Eroare la actualizarea feed-ului: {e}")
